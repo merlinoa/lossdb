@@ -8,3 +8,9 @@ reserve is designed to analyze the outstanding loss reserve applicable to a line
  * To work with available R resources to create ultimate loss projections and summary reserve report exhibits.
  
 reserve is still in very early stages of development, and this is my first R package.  I appreciate any advice.
+
+Package installation:
+  
+  ```R
+  devtools::install_github("merlinoa/reserve")
+  ```
