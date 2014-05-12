@@ -1,0 +1,20 @@
+Package: reserve
+Type: Package
+Title: Automate repetetive reserving work
+Version: 0.0.1
+Date: 2014-04-14
+Author: Andy Merlino
+Maintainer: Andy Merlino <merlinoa88@gmail.com>
+Description: The reserve package provides a framework for creating
+    simple actuarial reserve reports.
+License: MIT
+Roxygen: list(wrap = FALSE)
+Depends:
+    R (>= 3.1.0)
+Imports:
+    ggplot2,
+    reshape2
+VignetteBuilder: knitr
+LazyData: yes
+Suggests:
+    testthat
