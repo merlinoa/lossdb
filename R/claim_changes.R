@@ -42,7 +42,8 @@ claim_changes <- function(df, eval1, eval2, values = NULL) {
   non_values <- type_colnum(df_ = df, type = c("dev", "evaluation_date"))
   # select values to be compared depending on 'values' argument
   if (is.null(values)) {
-    comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2, exclude = non_values)
+    comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2,
+                                by = c("id", "origin"), exclude = non_values)
     values <- setdiff(names(df), c(type_colname(df_ = df, type = c("id", "origin", "dev", "evaluation_date"))))
   } else {
     values <- num_to_name(df = df, value = values)
@@ -56,7 +57,8 @@ claim_changes <- function(df, eval1, eval2, values = NULL) {
                   paid_recovery = intersect(values, type_colname(df, "paid_recovery")),
                   incurred_recovery = intersect(values, type_colname(df, "incurred_recovery")),
                   desc = intersect(values, type_colname(df, "desc")))
-    comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2, exclude = non_values)
+    comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2, 
+                                by = c("id", "origin"), exclude = non_values)
   }
   for (i in 1:length(values)) {
     comparison[, length(comparison) + 1] <- comparison[, paste0(values[i], "_", eval1)] -

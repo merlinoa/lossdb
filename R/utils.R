@@ -10,7 +10,6 @@ num_to_name <- function(df, value) {
 type_colname <- function(df_, type) {
   col_name <- sapply(type, function(x) names(df_[, attr(df_, "type") == x, drop = FALSE]))
   unlist(col_name)
-  #as.vector(col_name)
 }
 
 # find column numbers that have a certain 'type' attribute
@@ -38,11 +37,18 @@ sum_type <- function(df, type) {
   total
 }
 
-# merge wrapper for data frame using 'type' attribute
-merge_loss_df <- function(df, eval1, eval2, exclude) {
+#' merge wrapper for data frame using 'type' attribute
+#'
+#' @param df
+#' @param eval1
+#' @param eval2
+#' @param by vector of column names to merge by
+#' @param columns to be excluded from the merge
+#' 
+merge_loss_df <- function(df, eval1, eval2, by, exclude) {
   group1 <- df[df[, type_colnum(df_ = df, type = "evaluation_date")] == eval1, -exclude]
   group2 <- df[df[, type_colnum(df_ = df, type = "evaluation_date")] == eval2, -exclude]
-  comparison <- merge(group1, group2, by = type_colname(df_ = df, type = c("id", "origin")),
+  comparison <- merge(group1, group2, by = type_colname(df_ = df, type = by),
                       all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", eval1), paste0("_", eval2)))
   comparison[is.na(comparison)] <- 0
   comparison
