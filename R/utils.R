@@ -37,3 +37,13 @@ sum_type <- function(df, type) {
   total <- apply(type_cols, 1, sum)
   total
 }
+
+# merge wrapper for data frame using 'type' attribute
+merge_loss_df <- function(df, eval1, eval2, exclude) {
+  group1 <- df[df[, type_colnum(df_ = df, type = "evaluation_date")] == eval1, -exclude]
+  group2 <- df[df[, type_colnum(df_ = df, type = "evaluation_date")] == eval2, -exclude]
+  comparison <- merge(group1, group2, by = type_colname(df_ = df, type = c("id", "origin")),
+                      all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", eval1), paste0("_", eval2)))
+  comparison[is.na(comparison)] <- 0
+  comparison
+}
