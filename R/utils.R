@@ -37,10 +37,11 @@ carry_attr <- function(df1, df2) {
   df2
 }
 
+# returns the sum of the selected 'type' attribute
 sum_type <- function(df, type) {
   cols <- get_colnum(df_ = df, type = type)
   type_cols <- df[, cols]
-  total <- apply(type_cols, 1, sum)
+  total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
 }
 
