@@ -106,31 +106,31 @@ loss_df <- function(df, id, origin, dev, evaluation_date = NULL, paid = NULL,
 #' # with specified `evaluation_date`
 #' summary(losses_loss_df, evaluation_date = "2012-06-30")
 summary.loss_df <- function(df, evaluation_date = NULL) {
-  df$calendar <- df[, type_colname(df_ = df, type = "origin")] +
-                 df[, type_colname(df_ = df, type = "dev")]
-  cols <- type_colnum(df_ = df, type = c("id", "dev"))
+  df$calendar <- get_col(df_ = df, type = "origin") +
+                 get_col(df_ = df, type = "dev")
+  cols <- get_colnum(df_ = df, type = c("id", "dev"))
   df2 <- df[, -cols]
   df2 <- carry_attr(df1 = df, df2 = df2)
   attr(df2, "type")[length(attr(df2, "type"))] <- "calendar"
   if (is.null(evaluation_date)){
-    latest <- df2[df2$calendar == max(df2$calendar), -type_colnum(df_ = df2, type = "evaluation_date")]
+    latest <- df2[df2$calendar == max(df2$calendar), -get_colnum(df_ = df2, type = "evaluation_date")]
     latest <- carry_attr(df1 = df2, df2 = latest)
-    latest_no_origin <- latest[, -type_colnum(df_ = latest, type = "origin")]
+    latest_no_origin <- latest[, -get_colnum(df_ = latest, type = "origin")]
     smry <- apply(latest_no_origin, 2,
-                  function(x) tapply(x, latest[, type_colname(df_ = latest, type = "origin")], sum))
+                  function(x) tapply(x, get_col(df_ = latest, type = "origin"), sum))
   } else {
-    selected <- df2[df2[, type_colname(df_ = df2, type = "evaluation_date")] == evaluation_date, 
-                    -type_colnum(df_ = df2, type = "evaluation_date")]
+    selected <- df2[get_col(df_ = df2, type = "evaluation_date") == evaluation_date, 
+                    -get_colnum(df_ = df2, type = "evaluation_date")]
     selected <- carry_attr(df1 = df2, df2 = selected)
-    selected_no_origin <- selected[, -type_colnum(df_ = selected, type = "origin")]
-    smry <- apply(selected[, -which(names(selected) %in% type_colname(df_ = selected, type = "origin"))], 2,
-                  function(x) tapply(x, selected[, type_colname(df_ = selected, type = "origin")], sum))
+    selected_no_origin <- selected[, -get_colnum(df_ = selected, type = "origin")]
+    smry <- apply(selected[, -which(names(selected) %in% get_colname(df_ = selected, type = "origin"))], 2,
+                  function(x) tapply(x, get_col(df_ = selected, type = "origin"), sum))
   }
   smry <- as.data.frame(smry[, -which(colnames(smry) == "calendar")])
   
   attr(smry, "eval") <- evaluation_date
   origin <- data.frame(rownames(smry))
-  names(origin) <- type_colname(df_ = df, type = "origin")
+  names(origin) <- get_colname(df_ = df, type = "origin")
   smry <- cbind(origin, smry)
   rownames(smry) <- NULL
   smry
@@ -166,12 +166,12 @@ plot.loss_df <- function(df, evaluation_date = NULL) {
   df2$total_paid <- sum_type(df = df2, type = "paid")
   df2$total_incurred <- sum_type(df = df2, type = "incurred")
   df2$total_case <- df2$total_incurred - df2$total_paid
-  total <- melt(df2[, c(type_colnum(df_ = df2, type = "origin"), length(df2) - 2, length(df2))],  
+  total <- melt(df2[, c(get_colnum(df_ = df2, type = "origin"), length(df2) - 2, length(df2))],  
                 id.vars = 1)
   attr(total, "type") <- "origin"
   
   # create plot
-  p <- ggplot(total, aes_string(x = type_colname(df_ = total, type = "origin"))) +
+  p <- ggplot(total, aes_string(x = get_colname(df_ = total, type = "origin"))) +
   geom_bar(aes(weight = value, fill = variable)) + 
   xlab("Origin Year") + ylab("Loss Amounts") + ggtitle("Loss Amounts by Origin Year") + 
   guides(fill = guide_legend(reverse = TRUE))
@@ -185,16 +185,16 @@ plot.loss_df <- function(df, evaluation_date = NULL) {
 check_loss_df <- function(df) {
   ## need to add more checks
   # check that id, origin and dev are each 1 column
-  if (length(type_colname(df_ = df, c("id", "origin", "dev"))) != 3) {
+  if (length(get_colname(df_ = df, c("id", "origin", "dev"))) != 3) {
     stop("id, origin, and dev can only reference 1 column each")
   }
   # check to see that at least some loss data supplied
-  if (length(type_colname(df_ = df, c("paid", "incurred", "paid_recovery",
+  if (length(get_colname(df_ = df, c("paid", "incurred", "paid_recovery",
                                       "incurred_recovery", "desc"))) == 0) {
     stop("Some loss data must be provided")
   }
-  factor_cols <- type_colname(df_ = df, c("id", "evaluation_date"))
-  numeric_cols <- type_colname(df_ = df, c("paid", "incurred", "paid_recovery",
+  factor_cols <- get_colname(df_ = df, c("id", "evaluation_date"))
+  numeric_cols <- get_colname(df_ = df, c("paid", "incurred", "paid_recovery",
                                            "incurred_recovery", "desc"))
   if (!all(unlist(lapply(df[, factor_cols], is.factor)))) stop("set 'id' and 'evaluation_date' to factor")
   if (!all(unlist(lapply(df[, numeric_cols], is.numeric)))) stop("All columns other than 'id' and 'evaluation_date' must be numeric")  

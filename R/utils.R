@@ -6,19 +6,26 @@ num_to_name <- function(df, value) {
   value
 }
 
-# find column names that have a certain 'type' attribute
-type_colname <- function(df_, type) {
-  col_name <- sapply(type, function(x) names(df_[, attr(df_, "type") == x, drop = FALSE]))
+# return columns with a certain 'type' attribute
+# add functionality for negative type
+get_col <- function(df_, type) {
+  df_[, get_colnum(df_ = df_, type = type)]
+}
+
+
+# return column names that have a certain 'type' attribute
+get_colname <- function(df_, type) {
+  col_name <- lapply(type, function(x) names(df_[, attr(df_, "type") == x, drop = FALSE]))
   unlist(col_name)
 }
 
-# find column numbers that have a certain 'type' attribute
-type_colnum <- function(df_, type) {
+# return column numbers that have a certain 'type' attribute
+get_colnum <- function(df_, type) {
   col_index <- function(x) {
     colnum <- which(attr(df_, "type") %in% x)
     colnum
   }
-  col_num <- sapply(type, col_index)
+  col_num <- lapply(type, col_index)
   unlist(col_num)
 }
 
@@ -30,10 +37,11 @@ carry_attr <- function(df1, df2) {
   df2
 }
 
+# returns the sum of the selected 'type' attribute
 sum_type <- function(df, type) {
-  cols <- type_colnum(df_ = df, type = type)
+  cols <- get_colnum(df_ = df, type = type)
   type_cols <- df[, cols]
-  total <- apply(type_cols, 1, sum)
+  total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
 }
 
@@ -46,9 +54,9 @@ sum_type <- function(df, type) {
 #' @param columns to be excluded from the merge
 #' 
 merge_loss_df <- function(df, eval1, eval2, by, exclude) {
-  group1 <- df[df[, type_colnum(df_ = df, type = "evaluation_date")] == eval1, -exclude]
-  group2 <- df[df[, type_colnum(df_ = df, type = "evaluation_date")] == eval2, -exclude]
-  comparison <- merge(group1, group2, by = type_colname(df_ = df, type = by),
+  group1 <- df[get_col(df_ = df, type = "evaluation_date") == eval1, -exclude]
+  group2 <- df[get_col(df_ = df, type = "evaluation_date") == eval2, -exclude]
+  comparison <- merge(group1, group2, by = get_colname(df_ = df, type = by),
                       all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", eval1), paste0("_", eval2)))
   comparison[is.na(comparison)] <- 0
   comparison

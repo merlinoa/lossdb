@@ -39,24 +39,25 @@
 #' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30", 
 #'         values = c(6, 8, 9))
 claim_changes <- function(df, eval1, eval2, values = NULL) {
-  non_values <- type_colnum(df_ = df, type = c("dev", "evaluation_date"))
+  non_values <- get_colnum(df_ = df, type = c("dev", "evaluation_date"))
   # select values to be compared depending on 'values' argument
   if (is.null(values)) {
     comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2,
                                 by = c("id", "origin"), exclude = non_values)
-    values <- setdiff(names(df), c(type_colname(df_ = df, type = c("id", "origin", "dev", "evaluation_date"))))
+    # may want to make this a utility function and add a check for factors so it can support non numeric comparisons
+    values <- setdiff(names(df), c(get_colname(df_ = df, type = c("id", "origin", "dev", "evaluation_date"))))
   } else {
     values <- num_to_name(df = df, value = values)
     df <- loss_df(df = df,
-                  id = type_colname(df, "id"),
-                  origin = type_colname(df, "origin"),
-                  dev = type_colname(df, "dev"),
-                  evaluation_date = type_colname(df, "evaluation_date"),
-                  paid = intersect(values, type_colname(df, "paid")),
-                  incurred = intersect(values, type_colname(df, "incurred")),
-                  paid_recovery = intersect(values, type_colname(df, "paid_recovery")),
-                  incurred_recovery = intersect(values, type_colname(df, "incurred_recovery")),
-                  desc = intersect(values, type_colname(df, "desc")))
+                  id = get_colname(df, "id"),
+                  origin = get_colname(df, "origin"),
+                  dev = get_colname(df, "dev"),
+                  evaluation_date = get_colname(df, "evaluation_date"),
+                  paid = intersect(values, get_colname(df, "paid")),
+                  incurred = intersect(values, get_colname(df, "incurred")),
+                  paid_recovery = intersect(values, get_colname(df, "paid_recovery")),
+                  incurred_recovery = intersect(values, get_colname(df, "incurred_recovery")),
+                  desc = intersect(values, get_colname(df, "desc")))
     comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2, 
                                 by = c("id", "origin"), exclude = non_values)
   }
