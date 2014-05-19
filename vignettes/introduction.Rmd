@@ -1,0 +1,123 @@
+<!--
+%\VignetteEngine{knitr}
+%\VignetteIndexEntry{Introduction to reserve}
+-->
+
+```{r, echo = FALSE, message = FALSE}
+library(reserve)
+```
+
+The goal of this document is to introduce you to the basic tools `reserve` provides, and to walk you through a realistic example using the `reserve` package.
+
+It is often difficult to create reproducible actuarial reserve reports in Excel.  R has many advantages over Excel for creating reprodicible reports (in R you type commands rather than pointing and clicking, R can work with larger datasets, etc.). The goal of the `reserve` package is to provide a standard process for creating reserve reports using R. `reserve` provides a standard means of storing your claims data so you can use the same set of functions (defined by `reserve`) to automate many repetetive reserving tasks, and create reproducible reports that are generated directly from the original claim loss detail.
+
+When your report is not directly created from the the original loss detail (as provided by the insurance company) your report looses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using Excel because keeping all the historical loss information in Excel quickly results in data sets too large for Excel to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
+
+The `reserve` package improves flexibility in reserve report creation by maintaining access to all the original claim detail (i.e each report is generated from the original claim data as apposed to a summary of the original claim data); `reserve` makes the reserve report generation process reprodicible.  `reserve` provides a standard format for storing claim loss detail and provides a set of functions specific to that standard format.  The standard format is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is organized differently by different companies. 
+
+The `reserve` package comes with the following sample data set:
+```{r}
+str(losses)
+```
+`losses` is intended to resemble claims data provided by an insurance company.  There are many columns that are not relevant to our reserving analysis, and we are going to have to apply some transformations to the data to get all the information we need out of it.  Let's get started.
+
+1. Format the data so it can be stored as a `loss_df`.  A `loss_df` is required to have the following 4 columns:
+* id: factor - a unique identification key
+* origin: numeric - the time period in which the claim originated
+* dev: numeric - the development stage of the claim at the relevant evaluation_date
+* evaluation_date: factor - the time that the claim is being evaluated
+
+These categories provide all the necessary claim detail other than the actual loss values.
+
+2. Specify the loss values.  All loss values must fall into 1 of the following 5 categories:
+* paid: paid amounts
+* incurred: incurred amounts
+* paid_recovery: paid recovery amounts
+* incurred_recovery: incurred recovery amounts
+* desc: miscellaneous descriptive amounts
+
+All these values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses category).  Let's see an example.
+
+Let's use the dplyr package to manipulate the data.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
+```{r, message = FALSE}
+library(dplyr)
+# create origin and dev column
+losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)), evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")), dev = evaluation_year - origin) 
+
+# group claims by occurence
+# often necassary when excess reinsurance is applied on an occurence basis
+# rather than on a claims basis.
+occurences <- losses %.%
+  group_by(claim_number, dev, evaluation_date) %.%
+     summarise(claim_cts = n(),
+               payment_amount = sum(payment_amount),
+               reserve_amount = sum(reserve_amount),
+               origin = mean(origin),
+               paid_expense = sum(X4_exp_payment),
+               incurred_expense = sum(X4_exp_reserve)
+              )
+```
+
+
+```{r}
+
+# create relevant loss detail columns
+occurences <- mutate(occurences,
+                    paid_loss_only = payment_amount - paid_expense,
+                    incurred_loss_only = reserve_amount - incurred_expense) 
+```
+The above code does not use reserve package.  All we were doing there was preparing our data use with the reserve package.  You do not need to use dplyr for data preparation.
+
+Now that we have all the columns we want we create the `loss_df` object
+```{r}
+# create loss_df object
+mydf <- loss_df(occurences, id = "claim_number",
+                             origin = "origin",
+                             dev = "dev",
+                             evaluation_date = "evaluation_date", 
+                             paid = c("paid_loss_only", "paid_expense"),
+                             incurred = c("incurred_loss_only", "incurred_expense"),
+                             desc = "claim_cts"
+                 )
+head(mydf)
+```
+
+Each column has an attribute specifying the `type` of loss detail that the column contains.  The `type` was defined by the argument the column was supplied to in the `loss_df()` function.
+```{r}
+str(mydf)
+```
+
+Now we can use the `reserve` package to begin creating our reserve report.  Let's start by seeing a summary of the most recent loss detail summarized by origin period.
+```{r}
+summary(mydf)
+```
+
+We can look at the data at an older evaluation date by specifying the `evaluation_date
+```{r}
+summary(mydf, evaluation_date = "2012-06-30")
+
+```
+
+No let's see a graphical representation of the data
+```{r}
+plot(mydf)
+```
+
+and at an alternative evaluation_date
+```{r}
+plot(mydf, evaluation_date = "2012-06-30")
+```
+
+We can return a data frame of all the claims that have experienced a change from one evaluation date to another by using the `claim_changes` function:
+```{r}
+# shows all claims with a change to any of the loss amount values
+mychanges <- claim_changes(mydf, eval1 = "2013-06-30", eval2 = "2012-06-30")
+head(mychanges)
+```
+
+```{r}
+# specify the loss amount values you want to see the changed claims for 
+mychanges2 <- claim_changes(mydf, eval1 = "2013-06-30", eval2 = "2012-06-30",
+                            values = "paid_loss_only")
+head(mychanges2)
+```
