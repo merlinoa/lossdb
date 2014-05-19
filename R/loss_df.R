@@ -89,6 +89,12 @@ loss_df <- function(df, id, origin, dev, evaluation_date = NULL, paid = NULL,
   df2
 }
 
+#' Is an object a loss_df object
+#' 
+#' @export
+#' @param x and object to test
+#' @keywords internal
+is.loss_df <- function(x) inherits(x, "loss_df")
 
 #' get the sum of loss_df data by origin period
 #' 

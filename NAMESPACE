@@ -3,6 +3,7 @@
 S3method(plot,loss_df)
 S3method(summary,loss_df)
 export(claim_changes)
+export(is.loss_df)
 export(loss_df)
 import(ggplot2)
 import(reshape2)
