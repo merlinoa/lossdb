@@ -123,14 +123,14 @@ summary.loss_df <- function(df, evaluation_date = NULL) {
     latest <- carry_attr(df1 = df2, df2 = latest)
     latest_no_origin <- latest[, -get_colnum(df_ = latest, type = "origin")]
     smry <- apply(latest_no_origin, 2,
-                  function(x) tapply(x, get_col(df_ = latest, type = "origin"), sum))
+                  function(x) tapply(x, get_col(df_ = latest, type = "origin"), sum, na.rm = TRUE))
   } else {
     selected <- df2[get_col(df_ = df2, type = "evaluation_date") == evaluation_date, 
                     -get_colnum(df_ = df2, type = "evaluation_date")]
     selected <- carry_attr(df1 = df2, df2 = selected)
     selected_no_origin <- selected[, -get_colnum(df_ = selected, type = "origin")]
     smry <- apply(selected[, -which(names(selected) %in% get_colname(df_ = selected, type = "origin"))], 2,
-                  function(x) tapply(x, get_col(df_ = selected, type = "origin"), sum))
+                  function(x) tapply(x, get_col(df_ = selected, type = "origin"), sum, na.rm= TRUE))
   }
   smry <- as.data.frame(smry[, -which(colnames(smry) == "calendar")])
   
