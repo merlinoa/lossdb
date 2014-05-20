@@ -7,11 +7,13 @@
 library(reserve)
 ```
 
+# Introduction to reserve
+
 The goal of this document is to introduce you to the basic tools `reserve` provides, and to walk you through a realistic example using the `reserve` package.
 
 It is often difficult to create reproducible actuarial reserve reports in Excel.  R has many advantages over Excel for creating reprodicible reports (in R you type commands rather than pointing and clicking, R can work with larger datasets, etc.). The goal of the `reserve` package is to provide a standard process for creating reserve reports using R. `reserve` provides a standard means of storing your claims data so you can use the same set of functions (defined by `reserve`) to automate many repetetive reserving tasks, and create reproducible reports that are generated directly from the original claim loss detail.
 
-When your report is not directly created from the the original loss detail (as provided by the insurance company) your report looses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using Excel because keeping all the historical loss information in Excel quickly results in data sets too large for Excel to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
+When your report is not directly created from the the original loss detail (as provided by the insurance company) your report loses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using Excel because keeping all the historical loss information in Excel quickly results in data sets too large for Excel to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
 
 The `reserve` package improves flexibility in reserve report creation by maintaining access to all the original claim detail (i.e each report is generated from the original claim data as apposed to a summary of the original claim data); `reserve` makes the reserve report generation process reprodicible.  `reserve` provides a standard format for storing claim loss detail and provides a set of functions specific to that standard format.  The standard format is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is organized differently by different companies. 
 
