@@ -5,42 +5,68 @@
 
 ```{r, echo = FALSE, message = FALSE}
 library(reserve)
+knitr::opts_chunk$set(
+  comment = "#>",
+  tidy = FALSE)
 ```
 
 # Introduction to reserve
-
 The goal of this document is to introduce you to the basic tools `reserve` provides, and to walk you through a realistic example using the `reserve` package.
+
+The following Background section is taken from the `ChainLadder` package vignette [Claims reserving with R: Chainladder-0.1.7 Package Vignette](http://cran.r-project.org/web/packages/ChainLadder/vignettes/ChainLadder.pdf) by Markus Gesmann.
+
+## Background: Claims reserving in Insurance
+
+Unlike other industries the insurance industry does not sell products as such, but promises.  An insurance policy is a promise by the insurer to the policyholder to pay for future claims for an upfront received premium.
+
+As a result insurers don't know the upfront cost of their service, but rely on historical data analysis and judgement to derive a sustainable price for their offering.  In General Insurance (or Non-Life Insurance, e.g. motor, property and casualty insurance) most policies run for a period of 12 months.  However, the claims payment process can take years or even decades.  Therefore often not even the delivery date of their product is known to insurers.  
+
+In particular claims arising from casualty insurance can take a long time to settle.  Claims can take years to materialise.  A complex and costly example are the claims from asbestos liabilities.  A research report by a working party of the Institute of Actuaries has estimated that the undiscounted cost of UK mesothelioma-related claims to the UK Insurance Market for the period 2009 to 2050 could be around 10bn pounds.  The cost for asbestos related claims in the US for the worldwide insurance industry was estimated to be around $120bn in 2002.
+
+Thus, it should come to no surprise that the biggest item on the liability side of an insurer's balance sheet is often the provision or reserves for future claims payments.  Those reserves can be broken down in case reserves (or out-standing claims), which are losses already reported to the insurance company and incurred but not reported (IBNR) claims.
+
+## Motivation for the `reserve` package
 
 It is often difficult to create reproducible actuarial reserve reports in Excel.  R has many advantages over Excel for creating reproducible reports (in R you type commands rather than pointing and clicking, R can work with larger datasets, etc.). The goal of the `reserve` package is to provide a standard process for creating reserve reports using R. `reserve` provides a standard means of storing your claims data so you can use the same set of functions (defined by `reserve`) to automate many repetetive reserving tasks, and create reproducible reports that are generated directly from the original claim loss detail.
 
-When your report is not directly created from the the original loss detail (as provided by the insurance company) your report loses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using Excel because keeping all the historical loss information in Excel quickly results in data sets too large for Excel to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
+When your report is not directly created from the the original loss detail (as provided by the insurance company) your report loses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of say 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using Excel because keeping all the historical loss information in Excel quickly results in data sets too large for Excel to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
 
-The `reserve` package improves flexibility in reserve report creation by maintaining access to all the original claim detail (i.e each report is generated from the original claim data as opposed to a summary of the original claim data); `reserve` makes the reserve report generation process reproducible.  `reserve` provides a standard format for storing claim loss detail and provides a set of functions specific to that standard format.  The standard format is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is organized differently by different companies. 
+The `reserve` package improves flexibility in reserve report creation by maintaining access to all the original claim detail (i.e each report is generated from the original claim data as opposed to a summary of the original claim data); `reserve` makes the reserve report generation process reproducible.  `reserve` provides a standard format for storing claim loss detail and provides a set of functions specific to that standard format.  
 
-The `reserve` package comes with the following sample data set:
-```{r}
+## Working with the `reserve` package
+
+The standard format `reserve` uses to store claim loss data is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is categorized and organized differently from company to company. 
+
+The rest of this vignette will guide you through an example using reserve.  The example will proceed as follows:
+* Taking a data set (`losses`) in a format resembling how one might receive data from an insurance company, and transforming that data set into a `loss_df` object that contains and organizes only the information relevant to the reserve analysis.
+* Reviewing the `loss_df` for errors and probelm areas.
+* Performing statistical reserving techniques on the `loss_df`.
+* Summarizing the results with graphics and tables.
+
+View the structure of the uncleaned `losses` data frame using the `str` function:
+```{r, eval = FALSE}
 str(losses)
 ```
-`losses` is intended to resemble claims data provided by an insurance company.  There are many columns that are not relevant to our reserving analysis, and we are going to have to apply some transformations to the data to get all the information we need out of it.  Let's get started.
+There are many columns that are not relevant to our reserving analysis, and we are going to have to apply some transformations to the data to get all the information we need out of it.  Let's get started.
 
-1. Format the data so it can be stored as a `loss_df`.  A `loss_df` is required to have the following 4 columns:
-* id: factor - a unique identification key
-* origin: numeric - the time period in which the claim originated
-* dev: numeric - the development stage of the claim at the relevant evaluation_date
-* evaluation_date: factor - the time that the claim is being evaluated
+### Format the data so it can be stored as a `loss_df`. 
 
-These categories provide all the necessary claim detail other than the actual loss values.
+* These categories provide all the necessary claim detail other than the actual loss values. A `loss_df` is required to have the following 4 columns:
+  * id: factor - a unique identification key
+  * origin: numeric - the time period in which the claim originated
+  * dev: numeric - the development stage of the claim at the relevant evaluation_date
+  * evaluation_date: factor - the time that the claim is being evaluated
 
-2. Specify the loss values.  All loss values must fall into 1 of the following 5 categories:
-* paid: paid amounts
-* incurred: incurred amounts
-* paid_recovery: paid recovery amounts
-* incurred_recovery: incurred recovery amounts
-* desc: miscellaneous descriptive amounts
 
-All these values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses category).  Let's see an example.
+* Specify the loss values.  All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses category).  All loss values must fall into 1 of the following 5 categories:
+  * paid: paid amounts
+  * incurred: incurred amounts
+  * paid_recovery: paid recovery amounts
+  * incurred_recovery: incurred recovery amounts
+  * desc: miscellaneous descriptive amounts
 
-Let's use the dplyr package to manipulate the data.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
+
+Let's use the dplyr package to clean the data and create a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
 ```{r, message = FALSE}
 library(dplyr)
 # create origin and dev column
@@ -49,8 +75,8 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)), ev
 # group claims by occurence
 # often necassary when excess reinsurance is applied on an occurence basis
 # rather than on a claims basis.
-occurences <- losses %.%
-  group_by(claim_number, dev, evaluation_date) %.%
+occurences <- losses %>%
+  group_by(claim_number, dev, evaluation_date) %>%
      summarise(claim_cts = n(),
                payment_amount = sum(payment_amount),
                reserve_amount = sum(reserve_amount),
