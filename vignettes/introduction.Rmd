@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 ```
 
 # Introduction to reserve
-The goal of this document is to introduce the basic tools `reserve` provides, and to walk you through a realistic example using the `reserve` package.  This vignette and package are nowhere near complete.  I am creating the vignette in conjunction with the package to help keep my thoughts in line, and to remind me where I left off.
+The goal of this document is to introduce the basic tools `reserve` provides, and to walk through a realistic example using the `reserve` package.  This vignette and package are nowhere near complete.  I am creating the vignette in conjunction with the package to help keep my thoughts in line, and to remind me where I left off.
 
 The following Background section is taken from the `ChainLadder` package vignette [Claims reserving with R: Chainladder-0.1.7 Package Vignette](http://cran.r-project.org/web/packages/ChainLadder/vignettes/ChainLadder.pdf) by Markus Gesmann.
 
