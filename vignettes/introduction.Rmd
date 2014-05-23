@@ -11,7 +11,7 @@ knitr::opts_chunk$set(
 ```
 
 # Introduction to reserve
-The goal of this document is to introduce you to the basic tools `reserve` provides, and to walk you through a realistic example using the `reserve` package.
+The goal of this document is to introduce the basic tools `reserve` provides, and to walk you through a realistic example using the `reserve` package.  This vignette and package are nowhere near complete.  I am creating the vignette in conjunction with the package to help keep my thoughts in line, and to remind me where I left off.
 
 The following Background section is taken from the `ChainLadder` package vignette [Claims reserving with R: Chainladder-0.1.7 Package Vignette](http://cran.r-project.org/web/packages/ChainLadder/vignettes/ChainLadder.pdf) by Markus Gesmann.
 
@@ -51,14 +51,16 @@ There are many columns that are not relevant to our reserving analysis, and we a
 
 ### Format the data so it can be stored as a `loss_df`. 
 
-* These categories provide all the necessary claim detail other than the actual loss values. A `loss_df` is required to have the following 4 columns:
+The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in your loss df.  There are two main categories that a loss_df column can fall into, required (general information about the claim) or loss values (loss dollar amounts and status descritions)
+
+* Required: These categories provide all the necessary claim detail other than the actual loss values. A `loss_df` is required to have the following 4 columns:
   * id: factor - a unique identification key
   * origin: numeric - the time period in which the claim originated
   * dev: numeric - the development stage of the claim at the relevant evaluation_date
-  * evaluation_date: factor - the time that the claim is being evaluated
+  * evaluation_date: factor - the time at which the claim was evaluated
 
 
-* Specify the loss values.  All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses category).  All loss values must fall into 1 of the following 5 categories:
+* Loss Values: All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses category).  All loss values must fall into 1 of the following 5 categories:
   * paid: paid amounts
   * incurred: incurred amounts
   * paid_recovery: paid recovery amounts
@@ -66,11 +68,13 @@ There are many columns that are not relevant to our reserving analysis, and we a
   * desc: miscellaneous descriptive amounts
 
 
-Let's use the dplyr package to clean the data and create a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
+Let's use the dplyr package to clean the `losses` data so it conforms to the format required to make a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
 ```{r, message = FALSE}
 library(dplyr)
 # create origin and dev column
-losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)), evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")), dev = evaluation_year - origin) 
+losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)), 
+                 evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")),
+                 dev = evaluation_year - origin) 
 
 # group claims by occurence
 # often necassary when excess reinsurance is applied on an occurence basis
@@ -84,17 +88,13 @@ occurences <- losses %>%
                paid_expense = sum(X4_exp_payment),
                incurred_expense = sum(X4_exp_reserve)
               )
-```
 
-
-```{r}
-
-# create relevant loss detail columns
+# create relevant loss values columns
 occurences <- mutate(occurences,
                     paid_loss_only = payment_amount - paid_expense,
                     incurred_loss_only = reserve_amount - incurred_expense) 
 ```
-The above code does not use reserve package.  All we were doing there was preparing our data use with the reserve package.  You do not need to use dplyr for data preparation.
+The above code does not use the `reserve` package.  All we were doing there was preparing our data for use with the `reserve` package (often a time consuming task the first time around).  You can use any of the tools provided by R for data preparation; you do not need to use dplyr.
 
 Now that we have all the columns we want we create the `loss_df` object
 ```{r}
@@ -137,11 +137,6 @@ plot(mydf, evaluation_date = "2012-06-30")
 ```
 
 We can return a data frame of all the claims that have experienced a change from one evaluation date to another by using the `claim_changes` function:
-```{r}
-# shows all claims with a change to any of the loss amount values
-mychanges <- claim_changes(mydf, eval1 = "2013-06-30", eval2 = "2012-06-30")
-head(mychanges)
-```
 
 ```{r}
 # specify the loss amount values you want to see the changed claims for 
@@ -149,3 +144,5 @@ mychanges2 <- claim_changes(mydf, eval1 = "2013-06-30", eval2 = "2012-06-30",
                             values = "paid_loss_only")
 head(mychanges2)
 ```
+
+`mychanges2` is a data frame consisting of all the claims in which there was a change in the "paid_loss_only" column from 2012-06-30 to 2013-06-30.
