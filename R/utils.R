@@ -40,9 +40,19 @@ carry_attr <- function(df1, df2) {
 # returns the sum of the selected 'type' attribute
 sum_type <- function(df, type) {
   cols <- get_colnum(df_ = df, type = type)
-  type_cols <- df[, cols]
+  type_cols <- df[, cols, drop = FALSE]
   total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
+}
+
+# sum of paid `type` less sum of paid_recovery `type`
+net_paid <- function(df) {
+  sum_type(df = df, type = "paid") - sum_type(df = df, type = "paid_recovery")
+}
+
+# sum of incurred `type` less sum of incurred_recovery `type`
+net_paid <- function(df) {
+  sum_type(df = df, type = "incurred") - sum_type(df = df, type = "incurred_recovery")
 }
 
 #' merge wrapper for data frame using 'type' attribute
