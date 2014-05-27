@@ -30,8 +30,8 @@
 #'                  evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")),
 #'                  dev = evaluation_year - origin)
 #' 
-#' occurences <- losses %.%
-#' group_by(claim_number, dev, evaluation_date) %.%
+#' occurences <- losses %>%
+#' group_by(claim_number, dev, evaluation_date) %>%
 #'   summarise(claim_cts = n(),
 #'             payment_amount = sum(payment_amount),
 #'             reserve_amount = sum(reserve_amount),
@@ -41,7 +41,9 @@
 #'            )
 #' occurences <- mutate(occurences,
 #'                      paid_loss_only = payment_amount - paid_expense,
-#'                      incurred_loss_only = reserve_amount - incurred_expense)
+#'                      incurred_loss_only = reserve_amount - incurred_expense,
+#'                      paid_excess250 = max(payment_amount - 250000, 0),
+#'                      incurred_excess250 = max(reserve_amount - 250000, 0))
 #' 
 #' # create loss_df object
 #' my_df <- loss_df(occurences, id = "claim_number",
@@ -50,6 +52,8 @@
 #'                              evaluation_date = "evaluation_date", 
 #'                              paid = c("paid_loss_only", "paid_expense"),
 #'                              incurred = c("incurred_loss_only", "incurred_expense"),
+#'                              paid_recovery = "paid_excess250",
+#'                              incurred_recovery = "incurred_excess250",
 #'                              desc = "claim_cts"
 #'                  )
 #'                  
@@ -169,17 +173,21 @@ plot.loss_df <- function(df, evaluation_date = NULL) {
     df2 <- as.data.frame(summary(df, evaluation_date = evaluation_date))
   } 
   df2 <- carry_attr(df1 = df, df2 = df2)
-  df2$total_paid <- sum_type(df = df2, type = "paid")
-  df2$total_incurred <- sum_type(df = df2, type = "incurred")
-  df2$total_case <- df2$total_incurred - df2$total_paid
-  total <- melt(df2[, c(get_colnum(df_ = df2, type = "origin"), length(df2) - 2, length(df2))],  
+  df2$incurred <- sum_type(df = df2, type = "incurred")
+  df2$incurred_recovery <- -sum_type(df = df2, type = "incurred_recovery")
+  df2$paid_recovery <- -sum_type(df = df2, type = "paid_recovery")
+  df2$case_recovery <- df2$incurred_recovery - df2$paid_recovery
+  df2$paid <- sum_type(df = df2, type = "paid")
+  df2$case <- df2$incurred - df2$paid
+  
+  total <- melt(df2[, c(get_colnum(df_ = df2, type = "origin"), (length(df2) - 3):length(df2))],  
                 id.vars = 1)
   attr(total, "type") <- "origin"
   
   # create plot
   p <- ggplot(total, aes_string(x = get_colname(df_ = total, type = "origin"))) +
   geom_bar(aes(weight = value, fill = variable)) + 
-  xlab("Origin Year") + ylab("Loss Amounts") + ggtitle("Loss Amounts by Origin Year") + 
+  xlab("Origin Year") + ylab("Net Retained Loss Amounts") + ggtitle("Net Retained Loss Amounts by Origin Year") + 
   guides(fill = guide_legend(reverse = TRUE))
   p
 }
