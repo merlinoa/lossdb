@@ -46,7 +46,7 @@
 #'                      incurred_excess250 = max(reserve_amount - 250000, 0))
 #' 
 #' # create loss_df object
-#' my_df <- loss_df(occurences, id = "claim_number",
+#' mydf <- loss_df(occurences, id = "claim_number",
 #'                              origin = "origin", 
 #'                              dev = "dev",
 #'                              evaluation_date = "evaluation_date", 
@@ -58,7 +58,7 @@
 #'                  )
 #'                  
 #' # use numbers instead of character vector to identify columns
-#' my_df2 <- loss_df(losses2, id = 1, origin = 7, dev = 2, evaluation_date = 3,
+#' mydf2 <- loss_df(losses2, id = 1, origin = 7, dev = 2, evaluation_date = 3,
 #'                  paid = c(8, 10), incurred = c(9, 11), desc = 4)
 loss_df <- function(df, id, origin, dev, evaluation_date = NULL, paid = NULL, 
                     incurred = NULL, paid_recovery = NULL, incurred_recovery = NULL,
@@ -173,22 +173,24 @@ plot.loss_df <- function(df, evaluation_date = NULL) {
     df2 <- as.data.frame(summary(df, evaluation_date = evaluation_date))
   } 
   df2 <- carry_attr(df1 = df, df2 = df2)
+  df3 <- data.frame(get_col(df_ = df2, type = "origin"))
   df2$incurred <- sum_type(df = df2, type = "incurred")
   df2$incurred_recovery <- -sum_type(df = df2, type = "incurred_recovery")
-  df2$paid_recovery <- -sum_type(df = df2, type = "paid_recovery")
-  df2$case_recovery <- df2$incurred_recovery - df2$paid_recovery
-  df2$paid <- sum_type(df = df2, type = "paid")
-  df2$case <- df2$incurred - df2$paid
+  df3$paid_recovery <- -sum_type(df = df2, type = "paid_recovery")
+  df3$case_recovery <- df2$incurred_recovery - df3$paid_recovery
+  df3$paid <- sum_type(df = df2, type = "paid")
+  df3$case <- df2$incurred - df3$paid
   
-  total <- melt(df2[, c(get_colnum(df_ = df2, type = "origin"), (length(df2) - 3):length(df2))],  
-                id.vars = 1)
-  attr(total, "type") <- "origin"
+  total <- melt(df3, id.vars = 1)
+  attr(total, "type")[1] <- "origin"
   
   # create plot
-  p <- ggplot(total, aes_string(x = get_colname(df_ = total, type = "origin"))) +
-  geom_bar(aes(weight = value, fill = variable)) + 
-  xlab("Origin Year") + ylab("Net Retained Loss Amounts") + ggtitle("Net Retained Loss Amounts by Origin Year") + 
-  guides(fill = guide_legend(reverse = TRUE))
+  p <- ggplot(total, aes_string(x = get_colname(df_ = total, type = "origin"), 
+                                y = "value", fill = "variable")) +
+  geom_bar(stat = "identity", position = "identity")
+  #xlab("Origin Year") + ylab("Loss Amounts") + 
+  #ggtitle("Loss Amounts by Origin Year") +
+  #guides(fill = guide_legend(reverse = TRUE))
   p
 }
 
