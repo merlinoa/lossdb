@@ -168,29 +168,37 @@ summary.loss_df <- function(df, evaluation_date = NULL) {
 plot.loss_df <- function(df, evaluation_date = NULL) {
   # format data frame
   if (is.null(evaluation_date)) {
-    df2 <- as.data.frame(summary(df))
+    smry <- as.data.frame(summary(df))
   } else {
-    df2 <- as.data.frame(summary(df, evaluation_date = evaluation_date))
+    smry <- as.data.frame(summary(df, evaluation_date = evaluation_date))
   } 
-  df2 <- carry_attr(df1 = df, df2 = df2)
-  df3 <- data.frame(get_col(df_ = df2, type = "origin"))
-  df2$incurred <- sum_type(df = df2, type = "incurred")
-  df2$incurred_recovery <- -sum_type(df = df2, type = "incurred_recovery")
-  df3$paid_recovery <- -sum_type(df = df2, type = "paid_recovery")
-  df3$case_recovery <- df2$incurred_recovery - df3$paid_recovery
-  df3$paid <- sum_type(df = df2, type = "paid")
-  df3$case <- df2$incurred - df3$paid
+  smry <- carry_attr(df1 = df, df2 = smry)
+  pdata <- data.frame(get_col(df_ = smry, type = "origin"))
+  smry$incurred <- sum_type(df = smry, type = "incurred")
+  smry$incurred_recovery <- -sum_type(df = smry, type = "incurred_recovery")
+  pdata$paid_recovery <- -sum_type(df = smry, type = "paid_recovery")
+  pdata$case_recovery <- smry$incurred_recovery - pdata$paid_recovery
+  pdata$paid <- sum_type(df = smry, type = "paid")
+  pdata$case <- smry$incurred - pdata$paid
   
-  total <- melt(df3, id.vars = 1)
-  attr(total, "type")[1] <- "origin"
+  totals <- melt(pdata, id.vars = 1)
+  
+  # separate data frames based on positive whether value is positive or negative
+  # this is necessary to create stacked ggplot bar chart with positive and neg values
+  pos <- subset(totals, value > 0)
+  neg <- subset(totals, value < 0)
+  
+  attr(pos, "type")[1] <- "origin"
+  attr(neg, "type")[1] <- "origin"
   
   # create plot
-  p <- ggplot(total, aes_string(x = get_colname(df_ = total, type = "origin"), 
-                                y = "value", fill = "variable")) +
-  geom_bar(stat = "identity", position = "identity")
-  #xlab("Origin Year") + ylab("Loss Amounts") + 
-  #ggtitle("Loss Amounts by Origin Year") +
-  #guides(fill = guide_legend(reverse = TRUE))
+  p <- ggplot() +
+    geom_bar(data = pos, aes_string(x = get_colname(df_ = pos, type = "origin"), y = "value", fill = "variable"),
+             stat = "identity") +
+    geom_bar(data = neg, aes_string(x = get_colname(df_ = neg, type = "origin"), y = "value", fill = "variable"),
+             stat = "identity") +
+  xlab("Origin Year") + ylab("Loss Amounts") + 
+  ggtitle("Loss Amounts by Origin Year")
   p
 }
 
