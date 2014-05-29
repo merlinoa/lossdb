@@ -77,7 +77,7 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
                  dev = evaluation_year - origin) 
 
 # group claims by occurence
-# often necassary when excess reinsurance is applied on an occurence basis
+# often necessary when excess reinsurance is applied on an occurence basis
 # rather than on a claims basis.
 occurences <- losses %>%
   group_by(claim_number, dev, evaluation_date) %>%
@@ -92,7 +92,9 @@ occurences <- losses %>%
 # create relevant loss values columns
 occurences <- mutate(occurences,
                     paid_loss_only = payment_amount - paid_expense,
-                    incurred_loss_only = reserve_amount - incurred_expense) 
+                    incurred_loss_only = reserve_amount - incurred_expense,
+                    paid_excess250 = max(payment_amount - 250000, 0),
+                    incurred_excess250 = max(reserve_amount - 250000, 0)) 
 ```
 The above code does not use the `reserve` package.  All we were doing there was preparing our data for use with the `reserve` package (often a time consuming task the first time around).  You can use any of the tools provided by R for data preparation; you do not need to use dplyr.
 
@@ -105,15 +107,14 @@ mydf <- loss_df(occurences, id = "claim_number",
                              evaluation_date = "evaluation_date", 
                              paid = c("paid_loss_only", "paid_expense"),
                              incurred = c("incurred_loss_only", "incurred_expense"),
+                             paid_recovery = "paid_excess250",
+                             incurred_recovery = "incurred_excess250",
                              desc = "claim_cts"
                  )
 head(mydf)
 ```
 
 Each column has an attribute specifying the `type` of loss detail that the column contains.  The `type` was defined by the argument the column was supplied to in the `loss_df()` function.
-```{r}
-str(mydf)
-```
 
 Now we can use the `reserve` package to begin creating our reserve report.  Let's start by seeing a summary of the most recent loss detail summarized by origin period.
 ```{r}
