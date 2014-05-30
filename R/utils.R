@@ -8,21 +8,21 @@ num_to_name <- function(df, value) {
 
 # return columns with a certain 'type' attribute
 # add functionality for negative type
-get_col <- function(df_, type) {
-  df_[, get_colnum(df_ = df_, type = type), drop = TRUE]
+get_col <- function(df, type) {
+  df[, get_colnum(df = df, type = type), drop = TRUE]
 }
 
 
 # return column names that have a certain 'type' attribute
-get_colname <- function(df_, type) {
-  col_name <- lapply(type, function(x) names(df_[, attr(df_, "type") == x, drop = FALSE]))
+get_colname <- function(df, type) {
+  col_name <- lapply(type, function(x) names(df[, attr(df, "type") == x, drop = FALSE]))
   unlist(col_name)
 }
 
 # return column numbers that have a certain 'type' attribute
-get_colnum <- function(df_, type) {
+get_colnum <- function(df, type) {
   col_index <- function(x) {
-    colnum <- which(attr(df_, "type") %in% x)
+    colnum <- which(attr(df, "type") %in% x)
     colnum
   }
   col_num <- lapply(type, col_index)
@@ -39,7 +39,7 @@ carry_attr <- function(df1, df2) {
 
 # returns the sum of the selected 'type' attribute
 sum_type <- function(df, type) {
-  cols <- get_colnum(df_ = df, type = type)
+  cols <- get_colnum(df = df, type = type)
   type_cols <- df[, cols, drop = FALSE]
   total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
@@ -64,9 +64,9 @@ net_paid <- function(df) {
 #' @param columns to be excluded from the merge
 #' 
 merge_loss_df <- function(df, eval1, eval2, by, exclude) {
-  group1 <- df[get_col(df_ = df, type = "evaluation_date") == eval1, -exclude]
-  group2 <- df[get_col(df_ = df, type = "evaluation_date") == eval2, -exclude]
-  comparison <- merge(group1, group2, by = get_colname(df_ = df, type = by),
+  group1 <- df[get_col(df = df, type = "evaluation_date") == eval1, -exclude]
+  group2 <- df[get_col(df = df, type = "evaluation_date") == eval2, -exclude]
+  comparison <- merge(group1, group2, by = get_colname(df = df, type = by),
                       all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", eval1), paste0("_", eval2)))
   comparison[is.na(comparison)] <- 0
   comparison
