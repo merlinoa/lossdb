@@ -6,7 +6,7 @@
 #'  a unique 'id' for it's 'origin'.  (i.e. if a claim differs origin year from 'eval1' to 
 #' 'eval2' it will be returned as two seperate claims)
 #' 
-#' @param df S3 object of class \code{\link{loss_df}}
+#' @param ldf S3 object of class \code{\link{loss_df}}
 #' @param eval1 one of the evaluation dates to compare
 #' @param eval2 the other evaluation date.  Data at eval2 will be compared to data at eval1.
 #' @param values a vector of the names or number of the columns to be compared for changes.  If NULL all comparable
@@ -38,27 +38,27 @@
 #' # return claims with changes in multiple 'values' using column number
 #' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30", 
 #'         values = c(6, 8, 9))
-claim_changes <- function(df, eval1, eval2, values = NULL) {
-  non_values <- get_colnum(df_ = df, type = c("dev", "evaluation_date"))
+claim_changes <- function(ldf, eval1, eval2, values = NULL) {
+  non_values <- get_colnum(df = ldf, type = c("dev", "evaluation_date"))
   # select values to be compared depending on 'values' argument
   if (is.null(values)) {
-    comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2,
+    comparison <- merge_loss_df(ldf, eval1 = eval1, eval2 = eval2,
                                 by = c("id", "origin"), exclude = non_values)
     # may want to make this a utility function and add a check for factors so it can support non numeric comparisons
-    values <- setdiff(names(df), c(get_colname(df_ = df, type = c("id", "origin", "dev", "evaluation_date"))))
+    values <- setdiff(names(ldf), c(get_colname(df = ldf, type = c("id", "origin", "dev", "evaluation_date"))))
   } else {
-    values <- num_to_name(df = df, value = values)
-    df <- loss_df(df = df,
-                  id = get_colname(df, "id"),
-                  origin = get_colname(df, "origin"),
-                  dev = get_colname(df, "dev"),
-                  evaluation_date = get_colname(df, "evaluation_date"),
-                  paid = intersect(values, get_colname(df, "paid")),
-                  incurred = intersect(values, get_colname(df, "incurred")),
-                  paid_recovery = intersect(values, get_colname(df, "paid_recovery")),
-                  incurred_recovery = intersect(values, get_colname(df, "incurred_recovery")),
-                  desc = intersect(values, get_colname(df, "desc")))
-    comparison <- merge_loss_df(df, eval1 = eval1, eval2 = eval2, 
+    values <- num_to_name(df = ldf, value = values)
+    ldf <- loss_df(df = ldf,
+                  id = get_colname(ldf, "id"),
+                  origin = get_colname(ldf, "origin"),
+                  dev = get_colname(ldf, "dev"),
+                  evaluation_date = get_colname(ldf, "evaluation_date"),
+                  paid = intersect(values, get_colname(ldf, "paid")),
+                  incurred = intersect(values, get_colname(ldf, "incurred")),
+                  paid_recovery = intersect(values, get_colname(ldf, "paid_recovery")),
+                  incurred_recovery = intersect(values, get_colname(ldf, "incurred_recovery")),
+                  desc = intersect(values, get_colname(ldf, "desc")))
+    comparison <- merge_loss_df(ldf, eval1 = eval1, eval2 = eval2, 
                                 by = c("id", "origin"), exclude = non_values)
   }
   for (i in 1:length(values)) {
