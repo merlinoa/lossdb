@@ -117,29 +117,20 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' # with specified `evaluation_date`
 #' summary(losses_loss_df, evaluation_date = "2012-06-30")
 summary.loss_df <- function(ldf, evaluation_date = NULL) {
-  ldf$calendar <- get_col(df = ldf, type = "origin") +
-                 get_col(df = ldf, type = "dev")
-  cols <- get_colnum(df = ldf, type = c("id", "dev"))
-  df2 <- ldf[, -cols]
-  df2 <- carry_attr(df1 = ldf, df2 = df2)
-  attr(df2, "type")[length(attr(df2, "type"))] <- "calendar"
   if (is.null(evaluation_date)){
-    latest <- df2[df2$calendar == max(df2$calendar), -get_colnum(df = df2, type = "evaluation_date")]
-    latest <- carry_attr(df1 = df2, df2 = latest)
-    latest_no_origin <- latest[, -get_colnum(df = latest, type = "origin")]
-    smry <- apply(latest_no_origin, 2,
+    latest <- get_latest(df = ldf) 
+    exclude <- get_colnum(df = latest, type = c("id", "dev", "evaluation_date", "origin"))
+    latest_values <- latest[, -exclude]
+    latest_values <- carry_attr(df1 = latest, df2 = latest_values)
+    smry <- apply(latest_values, 2,
                   function(x) tapply(x, get_col(df = latest, type = "origin"), sum, na.rm = TRUE))
   } else {
-    selected <- df2[get_col(df = df2, type = "evaluation_date") == evaluation_date, 
-                    -get_colnum(df = df2, type = "evaluation_date")]
-    selected <- carry_attr(df1 = df2, df2 = selected)
-    selected_no_origin <- selected[, -get_colnum(df = selected, type = "origin")]
+    selected <- ldf[get_col(df = ldf, type = "evaluation_date") == evaluation_date, 
+                    -get_colnum(df = ldf, type = c("id", "dev", "evaluation_date"))]
+    selected <- carry_attr(df1 = ldf, df2 = selected)
     smry <- apply(selected[, -which(names(selected) %in% get_colname(df = selected, type = "origin"))], 2,
                   function(x) tapply(x, get_col(df = selected, type = "origin"), sum, na.rm= TRUE))
   }
-  smry <- as.data.frame(smry[, -which(colnames(smry) == "calendar")])
-  
-  attr(smry, "eval") <- evaluation_date
   origin <- data.frame(rownames(smry))
   names(origin) <- get_colname(df = ldf, type = "origin")
   smry <- cbind(origin, smry)
