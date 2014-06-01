@@ -51,7 +51,7 @@ net_paid <- function(df) {
 }
 
 # sum of incurred `type` less sum of incurred_recovery `type`
-net_paid <- function(df) {
+net_incurred <- function(df) {
   sum_type(df = df, type = "incurred") - sum_type(df = df, type = "incurred_recovery")
 }
 
