@@ -12,7 +12,7 @@
 #'projection(recovery_ldf, value = "incurred", recovery = "incurred_recovery", tail = 1.05)
 projection <- function(ldf, value, recovery = NULL, tail = 1.0) {
   proj_df <- get_col(df = ldf, type = c("origin", "dev"))
-  types <- c("paid", "incurred", "paid_recovery", "incurred_recovery")
+  types <- c("paid", "incurred")
   # value to be projected
   if (value %in% types) {
     proj_df$value <- sum_type(df = ldf, type = value)
@@ -21,17 +21,26 @@ projection <- function(ldf, value, recovery = NULL, tail = 1.0) {
   }
   # recovery
   if (!is.null(recovery)) {
-    if (recovery %in% types) {
-      proj_df$recovery <- sum_type(df = ldf, type = recovery)
-    } else if (recovery %in% names(ldf)){
-      proj_df$recovery <- ldf[, recovery]
+    reco <- list()
+    recovery_types <- c("paid_recovery", "incurred_recovery")
+    for (i in seq_along(recovery)) {
+      if (all(recovery %in% recovery_types)) {
+        reco[[i]] <- sum_type(df = ldf, type = recovery[i])
+      } else if (all(recovery %in% names(ldf))){
+        reco[[i]] <- ldf[, recovery[i]]
+      } else {
+        stop("recovery values not found")
+      }
+    }
+    if (length(recovery) > 1) {
+      total_recovery <- rowSums(as.data.frame(reco))
     } else {
-      stop("recovery values not found")
+      total_recovery <- unlist(reco)
     }
   }
-  # create value net recovery column if necessary
-  if ("recovery" %in% names(proj_df)) {
-    proj_df$total <- proj_df$value - proj_df$recovery
+  # create value net recovery if necessary
+  if (!is.null(recovery)) {
+    proj_df$total <- proj_df$value - total_recovery
   } else {
     names(proj_df) <- c("origin", "dev", "total")
   }
@@ -43,5 +52,6 @@ projection <- function(ldf, value, recovery = NULL, tail = 1.0) {
   cumwtd <- cumprod(wtd[length(wtd):1])
   projection$cum_dev <- cumwtd
   projection$ultimate <- projection$latest * projection$cum_dev
+  #### need to return more information
   return(projection)
 }
