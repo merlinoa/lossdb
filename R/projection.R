@@ -7,7 +7,6 @@
 #'@param recovery column or sum of columns with the same recovery type attribute
 #'@param tail optional tail development factor
 #'
-#'
 #'@examples
 #'projection(recovery_ldf, value = "paid")
 #'projection(recovery_ldf, value = "paid_loss_only")
