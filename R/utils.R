@@ -55,6 +55,23 @@ net_paid <- function(df) {
   sum_type(df = df, type = "incurred") - sum_type(df = df, type = "incurred_recovery")
 }
 
+# return all claims at latest evaluation date
+get_latest <- function(df, type = NULL) {
+  calendar <- get_col(df = df, type = "origin") +
+                 get_col(df = df, type = "dev")
+  attr(df, "type")[length(attr(df, "type"))] <- "calendar"
+  latest <- df[calendar == max(calendar), ]
+  latest <- carry_attr(df1 = df, df2 = latest)
+  if (is.null(type)) {
+    return(latest)
+  } else {
+    latest <- get_col(df = latest, type = c("id", "origin", "dev",
+                                         "evaluation_date", type))
+    latest <- carry_attr(df1 = df, df2 = latest)
+    return(latest)
+  }
+}
+
 #' merge wrapper for data frame using 'type' attribute
 #'
 #' @param df
