@@ -8,7 +8,9 @@ projection(ldf, value, recovery = NULL, tail = 1)
 \arguments{
 \item{ldf}{data frame of class loss_df}
 
-\item{value}{column or sum of columns with the same type attribute to project}
+\item{value}{column or sum of columns with the same type attribute}
+
+\item{recovery}{column or sum of columns with the same recovery type attribute}
 
 \item{tail}{optional tail development factor}
 }
@@ -17,6 +19,7 @@ Simple chainladder projection using weighted age to age development factors
 }
 \examples{
 projection(recovery_ldf, value = "paid")
+projection(recovery_ldf, value = "paid_loss_only")
 projection(recovery_ldf, value = "incurred")
 projection(recovery_ldf, value = "incurred", recovery = "incurred_recovery", tail = 1.05)
 }
