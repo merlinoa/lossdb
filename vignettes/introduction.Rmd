@@ -180,5 +180,5 @@ projection(mydf, value = "paid", recovery = "paid_excess250")
 ```
 ```{r}
 # include recovery detail by category: `sal_sub` and `paid_excess250`
-projection(mydf, value = "paid", recovery = c("paid_excess", "sal_sub"))
+projection(mydf, value = "paid", recovery = c("paid_excess250", "sal_sub"))
 ```
