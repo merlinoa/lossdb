@@ -48,7 +48,7 @@ claim_changes <- function(ldf, eval1, eval2, values = NULL) {
     values <- setdiff(names(ldf), c(get_colname(df = ldf, type = c("id", "origin", "dev", "evaluation_date"))))
   } else {
     values <- num_to_name(df = ldf, value = values)
-    ldf <- loss_df(df = ldf,
+    ldf <- loss_df(ldf = ldf,
                   id = get_colname(ldf, "id"),
                   origin = get_colname(ldf, "origin"),
                   dev = get_colname(ldf, "dev"),
