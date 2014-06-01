@@ -135,6 +135,7 @@ summary.loss_df <- function(ldf, evaluation_date = NULL) {
   names(origin) <- get_colname(df = ldf, type = "origin")
   smry <- cbind(origin, smry)
   rownames(smry) <- NULL
+  smry <- carry_attr(df1 = ldf, df2 = smry)
   smry
 }
 
