@@ -27,9 +27,9 @@ Thus, it should come to no surprise that the biggest item on the liability side 
 
 ## Motivation for the `reserve` package
 
-It is often difficult to create reproducible actuarial reserve reports in Excel.  R has many advantages over Excel for creating reproducible reports (in R you type commands rather than pointing and clicking, R can work with larger datasets, etc.). The goal of the `reserve` package is to provide a standard process for creating reserve reports using R. `reserve` provides a standard means of storing your claims data so you can use the same set of functions (defined by `reserve`) to automate many repetetive reserving tasks, and create reproducible reports that are generated directly from the original claim loss detail.
+It is often difficult to create reproducible actuarial reserve reports using a spreadsheet gui.  R has many advantages over spreadsheets (in R you type commands rather than pointing and clicking, R can work with larger datasets, etc.). The goal of the `reserve` package is to provide a standard process for creating reserve reports using R. `reserve` provides a standard means of storing your claims data so you can use the same set of functions (defined by `reserve`) to automate many repetetive reserving tasks, and create reproducible reports that are generated directly from the original claim loss detail.
 
-When your report is not directly created from the the original loss detail (as provided by the insurance company) your report loses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of say 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using Excel because keeping all the historical loss information in Excel quickly results in data sets too large for Excel to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
+When a reserve report is not directly created from the the original loss detail the report loses flexibility (e.g. If you create a development triangle using no excess retention limits there is no way to create a new development triangle based on an excess retention limit of say 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using spreadsheets because keeping all the historical loss information in one spreadsheet quickly results in data sets too large for the spreadsheet to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
 
 The `reserve` package improves flexibility in reserve report creation by maintaining access to all the original claim detail (i.e each report is generated from the original claim data as opposed to a summary of the original claim data); `reserve` makes the reserve report generation process reproducible.  `reserve` provides a standard format for storing claim loss detail and provides a set of functions specific to that standard format.  
 
@@ -38,7 +38,7 @@ The `reserve` package improves flexibility in reserve report creation by maintai
 The standard format `reserve` uses to store claim loss data is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is categorized and organized differently from company to company. 
 
 The rest of this vignette will guide you through an example using reserve.  The example will proceed as follows:
-* Taking a data set (`losses`) in a format resembling how one might receive data from an insurance company, and transforming that data set into a `loss_df` object that contains and organizes only the information relevant to the reserve analysis.
+* Taking a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transforming that data set into a `loss_df` object that contains and organizes all the information relevant to the reserve analysis.
 * Reviewing the `loss_df` for errors and probelm areas.
 * Performing statistical reserving techniques on the `loss_df`.
 * Summarizing the results with graphics and tables.
@@ -47,11 +47,11 @@ View the structure of the uncleaned `losses` data frame using the `str` function
 ```{r, eval = FALSE}
 str(losses)
 ```
-There are many columns that are not relevant to our reserving analysis, and we are going to have to apply some transformations to the data to get all the information we need out of it.  Let's get started.
+There are many columns that are not relevant to our reserving analysis, and we are going to have to apply some transformations to the data to get all the information we need out of the losses data frame.  Let's get started.
 
 ### Format the data so it can be stored as a `loss_df`. 
 
-The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in your loss df.  There are two main categories that a loss_df column can fall into, required (general information about the claim) or loss values (loss dollar amounts and status descritions)
+The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in the loss df.  There are two main categories that a loss_df column can fall into: required (general information about the claim) and loss values (loss dollar amounts and claim descritions)
 
 * Required: These categories provide all the necessary claim detail other than the actual loss values. A `loss_df` is required to have the following 4 columns:
   * id: factor - a unique identification key
@@ -60,7 +60,7 @@ The `loss_df()` function takes the uncleaned data frame as its first formal argu
   * evaluation_date: factor - the time at which the claim was evaluated
 
 
-* Loss Values: All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses category).  All loss values must fall into 1 of the following 5 categories:
+* Loss Values: All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses categories separately or the sum of paid losses and paid expenses).  All loss values must fall into 1 of the following 5 categories:
   * paid: paid amounts
   * incurred: incurred amounts
   * paid_recovery: paid recovery amounts
@@ -82,23 +82,24 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
 occurences <- losses %>%
   group_by(claim_number, dev, evaluation_date) %>%
      summarise(claim_cts = n(),
-               payment_amount = sum(payment_amount),
-               reserve_amount = sum(reserve_amount),
-               origin = mean(origin),
-               paid_expense = sum(X4_exp_payment),
-               incurred_expense = sum(X4_exp_reserve)
+               payment_amount = sum(payment_amount), # paid loss & ALAE
+               reserve_amount = sum(reserve_amount), # incurred loss & ALAE
+               origin = unique(origin),
+               paid_expense = sum(X4_exp_payment), # paid ALAE
+               incurred_expense = sum(X4_exp_reserve), #incurred ALAE
+               sal_sub = sum(payment_no_reserve_a) # salvage and subrogation
               )
 
 # create relevant loss values columns
 occurences <- mutate(occurences,
                     paid_loss_only = payment_amount - paid_expense,
                     incurred_loss_only = reserve_amount - incurred_expense,
-                    paid_excess250 = max(payment_amount - 250000, 0),
-                    incurred_excess250 = max(reserve_amount - 250000, 0)) 
+                    paid_excess250 = max(payment_amount - sal_sub - 250000, 0),
+                    incurred_excess250 = max(reserve_amount - sal_sub - 250000, 0)) 
 ```
-The above code does not use the `reserve` package.  All we were doing there was preparing our data for use with the `reserve` package (often a time consuming task the first time around).  You can use any of the tools provided by R for data preparation; you do not need to use dplyr.
+The above code does not use the `reserve` package.  All that code did was prepare the data for use with the `reserve` package (often a time consuming task the first time around).  You can use any of the tools provided by R for data preparation; you do not need to use dplyr.
 
-Now that we have all the columns we want we create the `loss_df` object
+Now that we have all the necessary columns, we can create the `loss_df` object.
 ```{r}
 # create loss_df object
 mydf <- loss_df(occurences, id = "claim_number",
@@ -107,7 +108,7 @@ mydf <- loss_df(occurences, id = "claim_number",
                              evaluation_date = "evaluation_date", 
                              paid = c("paid_loss_only", "paid_expense"),
                              incurred = c("incurred_loss_only", "incurred_expense"),
-                             paid_recovery = "paid_excess250",
+                             paid_recovery = c("paid_excess250", "sal_sub"),
                              incurred_recovery = "incurred_excess250",
                              desc = "claim_cts"
                  )
@@ -116,34 +117,68 @@ head(mydf)
 
 Each column has an attribute specifying the `type` of loss detail that the column contains.  The `type` was defined by the argument the column was supplied to in the `loss_df()` function.
 
-Now we can use the `reserve` package to begin creating our reserve report.  Let's start by seeing a summary of the most recent loss detail summarized by origin period.
+### Review the data
+
+Now we can use the `reserve` package to review the data.  Let's start by seeing a summary of the most recent loss detail summarized by origin period.
 ```{r}
 summary(mydf)
 ```
 
-We can look at the data at an older evaluation date by specifying the `evaluation_date
+We can look at the data at an older evaluation date by specifying the `evaluation_date`
 ```{r}
 summary(mydf, evaluation_date = "2012-06-30")
 
 ```
 
-No let's see a graphical representation of the data
+No let's see a bar chart of the data
 ```{r}
 plot(mydf)
 ```
 
-and at an alternative evaluation_date
+and at an alternative `evaluation_date`
 ```{r}
 plot(mydf, evaluation_date = "2012-06-30")
 ```
 
-We can return a data frame of all the claims that have experienced a change from one evaluation date to another by using the `claim_changes` function:
+We can return a data frame of all the claims that have experienced a change from one evaluation date to another by using the `claim_changes()` function:
 
 ```{r}
 # specify the loss amount values you want to see the changed claims for 
 mychanges2 <- claim_changes(mydf, eval1 = "2013-06-30", eval2 = "2012-06-30",
-                            values = "paid_loss_only")
+                            values = c("paid_loss_only", "claim_cts"))
 head(mychanges2)
 ```
 
-`mychanges2` is a data frame consisting of all the claims in which there was a change in the "paid_loss_only" column from 2012-06-30 to 2013-06-30.
+`mychanges2` is a data frame consisting of all the claims in which there was a change in the "paid_loss_only" column from 2012-06-30 to 2013-06-30.  You can now browse through the changed claim to spot obvious problems with the new data.  For example we may want to check that there are no missing claims (i.e. no claims that were in the data at the last `evaluation_date` that are no longer in the data)
+
+```{r}
+# check for missing claims
+mychanges2[, mychanges2$claim_cts_change < 0]
+```
+We may also want to check if the `paid_loss_only` category decreased for any claims.
+```{r}
+# check for claims in which paid_loss_only decreased
+mychanges2[, mychanges2$paid_loss_only_changes < 0]
+```
+
+There are no missing claims or claims with a decrease in `paid_loss_only`.  After this quick review it appears that new data are reasonable.  Next we can project some ultimate losses. 
+
+### Create Projections
+
+The `projection()` function can be used to make simple chain ladder projections.
+```{r}
+# make a paid projections based of total paid amounts gross of all recoveries
+projection(mydf, value = "paid")
+```
+```{r}
+# make a paid projection net of all recoveries
+projection(mydf, value = "paid", recovery = "paid_recovery")
+```
+```{r}
+# make a paid projection net of paid_excess250 recoveries
+projection(mydf, value = "paid", recovery = "paid_excess250")
+```
+```{r}
+# include recovery detail by category: `sal_sub` and `paid_excess250`
+projection(mydf, value = "paid", recovery = c("paid_excess", "sal_sub"))
+```
