@@ -104,6 +104,8 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' get the sum of loss_df data by origin period
 #' 
 #' @param ldf loss_df S3 object
+#' @param values optional - select specific values to summarize
+#' @param evaluation_date optional evaluation date
 #' 
 #' @keywords internal
 #' @method summary loss_df
@@ -112,11 +114,11 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' @export
 #' @examples
 #' # without specificied `evaluation_date`
-#' summary(losses_loss_df)
+#' summary(recovery_ldf)
 #' 
 #' # with specified `evaluation_date`
-#' summary(losses_loss_df, evaluation_date = "2012-06-30")
-summary.loss_df <- function(ldf, evaluation_date = NULL) {
+#' summary(recovery_ldf, evaluation_date = "2012-06-30")
+summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
   if (is.null(evaluation_date)){
     latest <- get_latest(df = ldf) 
     exclude <- get_colnum(df = latest, type = c("id", "dev", "evaluation_date", "origin"))
@@ -136,7 +138,21 @@ summary.loss_df <- function(ldf, evaluation_date = NULL) {
   smry <- cbind(origin, smry)
   rownames(smry) <- NULL
   smry <- carry_attr(df1 = ldf, df2 = smry)
-  smry
+  if (is.null(values)) {
+    return(smry)
+  } else {
+    types <- c("paid", "incurred", "paid_recovery", "incurred_recovery")
+    smry2 <- get_col(df = smry, type = "origin", drop = FALSE)
+    for (i in intersect(values, types)) {
+      smry2[, i] <- sum_type(df = smry, type = i)
+    }
+    for (j in intersect(values, names(smry))) {
+      smry2[, j] <- smry[, j, drop = FALSE]
+    }
+    smry2 <- carry_attr(df1 = smry, df2 = smry2)
+    return(smry2)
+  }
+  
 }
 
 
