@@ -8,8 +8,8 @@ num_to_name <- function(df, value) {
 
 # return columns with a certain 'type' attribute
 # add functionality for negative type
-get_col <- function(df, type) {
-  df[, get_colnum(df = df, type = type), drop = TRUE]
+get_col <- function(df, type, drop = TRUE) {
+  df[, get_colnum(df = df, type = type), drop = drop]
 }
 
 
