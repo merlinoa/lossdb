@@ -17,4 +17,5 @@ Imports:
 VignetteBuilder: knitr
 LazyData: yes
 Suggests:
+    knitr,
     testthat
