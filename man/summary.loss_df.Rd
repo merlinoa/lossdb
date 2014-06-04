@@ -3,20 +3,24 @@
 \alias{summary.loss_df}
 \title{get the sum of loss_df data by origin period}
 \usage{
-\method{summary}{loss_df}(ldf, evaluation_date = NULL)
+\method{summary}{loss_df}(ldf, values = NULL, evaluation_date = NULL)
 }
 \arguments{
 \item{ldf}{loss_df S3 object}
+
+\item{values}{optional - select specific values to summarize}
+
+\item{evaluation_date}{optional evaluation date}
 }
 \description{
 get the sum of loss_df data by origin period
 }
 \examples{
 # without specificied `evaluation_date`
-summary(losses_loss_df)
+summary(recovery_ldf)
 
 # with specified `evaluation_date`
-summary(losses_loss_df, evaluation_date = "2012-06-30")
+summary(recovery_ldf, evaluation_date = "2012-06-30")
 }
 \keyword{internal}
 
