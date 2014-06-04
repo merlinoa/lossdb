@@ -14,17 +14,14 @@
 #'projection(recovery_ldf, value = "incurred")
 #'projection(recovery_ldf, value = "incurred", recovery = "incurred_recovery", tail = 1.05)
 projection <- function(ldf, value, recovery = NULL, tail = 1.0) {
+  if (length(value) != 1) stop("value must be of length 1")
   proj_df <- get_col(df = ldf, type = c("origin", "dev"))
   types <- c("paid", "incurred")
-  smry <- summary(ldf = ldf)
   # value to be projected
   if (value %in% types) {
-    proj_df$value <- sum_type(df = ldf, type = value)
-    smry2 <- as.data.frame(sum_type(df = smry, type = value))
-    names(smry2) <- value
+    proj_df$value <- sum_type(df = ldf, type = value)      
   } else {
     proj_df$value <- ldf[, value]
-    smry2 <- smry[, value]
   }
   # recovery
   if (!is.null(recovery)) {
@@ -33,12 +30,8 @@ projection <- function(ldf, value, recovery = NULL, tail = 1.0) {
     for (i in seq_along(recovery)) {
       if (all(recovery %in% recovery_types)) {
         reco[[i]] <- sum_type(df = ldf, type = recovery[i])
-        reco_smry <- as.data.frame(sum_type(df = smry, type = recovery[i]))
-        names(reco_smry) <- recovery
-        smry2 <- cbind(smry2, reco_smry)
       } else if (all(recovery %in% names(ldf))){
         reco[[i]] <- ldf[, recovery[i]]
-        smry2 <- cbind(smry2, smry[, recovery[i], drop = FALSE])
       } else {
         stop("recovery values not found")
       }
@@ -62,10 +55,10 @@ projection <- function(ldf, value, recovery = NULL, tail = 1.0) {
   cum_dev <- cumprod(wtd[length(wtd):1])
   latest <- getLatestCumulative(tri)
   if (is.null(recovery)) {
-    smry2 <- data.frame(latest, cum_dev)
+    smry <- data.frame(latest, cum_dev)
   } else {
-    smry2 <- cbind(smry2, latest, cum_dev)
+    smry <- cbind(summary(ldf, values = c(value, recovery)), latest, cum_dev)
   }
-  smry2$ultimate <- smry2$latest * smry2$cum_dev
-  return(smry2)
+  smry$ultimate <- smry$latest * smry$cum_dev
+  return(smry)
 }
