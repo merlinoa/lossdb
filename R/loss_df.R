@@ -118,6 +118,7 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' 
 #' # with specified `evaluation_date`
 #' summary(recovery_ldf, evaluation_date = "2012-06-30")
+#' summary(recovery_ldf, values = c("paid_excess250", "sal_sub", "paid"))
 summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
   if (is.null(evaluation_date)){
     latest <- get_latest(df = ldf) 
@@ -149,6 +150,9 @@ summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
     for (j in intersect(values, names(smry))) {
       smry2[, j] <- smry[, j, drop = FALSE]
     }
+    index <- match(values, names(smry2[, 2:length(smry2)]))
+    index <- index + 1
+    smry2 <- data.frame(smry2[, 1, drop = FALSE], smry2[index])
     smry2 <- carry_attr(df1 = smry, df2 = smry2)
     return(smry2)
   }
