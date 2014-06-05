@@ -32,15 +32,13 @@ get_colnum <- function(df, type) {
 # carry appropriate attributes over to new data frame
 carry_attr <- function(df1, df2) {
   type_index <- match(names(df2), names(df1))
-  type_index <- type_index[!is.na(type_index)]
   attr(df2, "type") <- attr(df1, "type")[type_index]
   df2
 }
 
 # returns the sum of the selected 'type' attribute
 sum_type <- function(df, type) {
-  cols <- get_colnum(df = df, type = type)
-  type_cols <- df[, cols, drop = FALSE]
+  type_cols <- get_col(df = df, type = type, drop = FALSE)
   total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
 }
