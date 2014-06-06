@@ -21,6 +21,7 @@ summary(recovery_ldf)
 
 # with specified `evaluation_date`
 summary(recovery_ldf, evaluation_date = "2012-06-30")
+summary(recovery_ldf, values = c("paid_excess250", "sal_sub", "paid"))
 }
 \keyword{internal}
 
