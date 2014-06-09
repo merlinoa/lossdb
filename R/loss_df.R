@@ -144,19 +144,22 @@ summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
   } else {
     types <- c("paid", "incurred", "paid_recovery", "incurred_recovery")
     smry2 <- get_col(df = smry, type = "origin", drop = FALSE)
+    # summarize `type` by summing
     for (i in intersect(values, types)) {
       smry2[, i] <- sum_type(df = smry, type = i)
     }
+    # return specific columns
     for (j in intersect(values, names(smry))) {
       smry2[, j] <- smry[, j, drop = FALSE]
     }
-    index <- match(values, names(smry2[, 2:length(smry2)]))
+    
+    # reorder columns so they are in same order as `values` argument
+    index <- match(values, names(smry2[, 2:length(smry2), drop = FALSE]))
     index <- index + 1
     smry2 <- data.frame(smry2[, 1, drop = FALSE], smry2[index])
     smry2 <- carry_attr(df1 = smry, df2 = smry2)
     return(smry2)
-  }
-  
+  } 
 }
 
 

@@ -1,3 +1,8 @@
+# store types
+types <- list(values = c("paid", "incurred"),
+              recovery = c("paid_recovery", "incurred_recovery"),
+              all = c("paid", "incurred", "paid_recovery", "incurred_recovery"))
+
 # convert positions to names
 num_to_name <- function(df, value) {
   if (!missing(value) && is.numeric(value)) {
