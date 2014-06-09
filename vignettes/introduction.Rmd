@@ -165,20 +165,20 @@ There are no missing claims or claims with a decrease in `paid_loss_only`.  Afte
 
 ### Create Projections
 
-The `projection()` function can be used to make simple chain ladder projections.
+Before a projection is made we must specifiy exactly what loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, net of all recoveries, medical only paid loss & ALAE net of all recoveries, etc.).  The `retain` function specifies the values to be projected.  Like the `loss_df` function, it is an S3 class constructor.
 ```{r}
-# make a paid projections based of total paid amounts gross of all recoveries
-projection(mydf, value = "paid")
+# create data frame with total paid values gross of all recoveries
+retain(mydf, value = "paid")
 ```
 ```{r}
-# make a paid projection net of all recoveries
-projection(mydf, value = "paid", recovery = "paid_recovery")
+# create data frame with total paid values net of total paid recovery
+retain(mydf, value = "paid", recovery = "paid_recovery")
 ```
 ```{r}
-# make a paid projection net of paid_excess250 recoveries
-projection(mydf, value = "paid", recovery = "paid_excess250")
+# create a data frame with paid net of paid_excess250 recoveries
+retain(mydf, value = "paid", recovery = "paid_excess250")
 ```
 ```{r}
 # include recovery detail by category: `sal_sub` and `paid_excess250`
-projection(mydf, value = "paid", recovery = c("paid_excess250", "sal_sub"))
+retain(mydf, value = "paid", recovery = c("paid_excess250", "sal_sub"))
 ```
