@@ -12,13 +12,21 @@ exhibit(data, ...)
 }
 \description{
 Exhibit defines certain ways to arrange values in
-the `reserve` package for presentation in a report.
+the \code{reserve} package for presentation in a report.
 It is similar to summary, but tailored to fit nicely
-on a single sheet of paper...
+on a single sheet of paper.  A typical result from
+executing the \code{exhibit} function is a data frame in
+which each row represents an origin period and each
+column represents a some aggregate claim loss amount.
 }
 \examples{
-tri <- as.triangle(recovery_ldf, origin = "origin", dev = "dev", value = "paid_loss_only")
+library(ChainLadder)
+tri <- as.triangle(recovery_ldf, origin = "origin",
+                   dev = "dev", value = "paid_loss_only")
 dev_tri <- ata(tri)
-exhibit(dev_tri, selection = c(1.9, 1.2, 1.13, 1.075))
+exhibit(dev_tri, selection = c(1.9, 1.2, 1.13, 1.075, NA))
+
+# with tail factor selected
+exhibit(dev_tri, selection = c(1.9, 1.2, 1.13, 1.075, 1.1))
 }
 
