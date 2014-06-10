@@ -27,7 +27,16 @@ exhibit <- function(data, ...) UseMethod("exhibit")
 # I would like to incorporate xtable or knitr package so my tables
 # look nicer.  These are ok, but not nice enough for actual report.
 
-#' exhibit generic method for class ata from ChainLadder package
+
+#' Return a triangle for age to age development factors
+#' 
+#' @param ata object of class ata generated from \code{ChainLadder} package
+#' @param selection optional selected development factors
+#' 
+#' @keywords internal
+#' @method exhibit ata
+#' 
+#' @export
 exhibit.ata <- function(ata, selection = NULL) {
   xhbt <- as.data.frame(ata[1:nrow(ata), 1:ncol(ata)])
   final_col_name <- paste0(substr(colnames(xhbt[, ncol(xhbt), drop = FALSE]), 3, 3), "-Ult.")
@@ -41,7 +50,17 @@ exhibit.ata <- function(ata, selection = NULL) {
   format(xhbt, digits = 3, nsmall = 3)
 }
 
-#' exhibit generic method for class triangle from ChainLadder package
+#' Returns an age to age development triangle
+#' 
+#' @param ata object of class triangle generated from \code{ChainLadder} package
+#' 
+#' @keywords internal
+#' @method exhibit triangle
+#' 
+#' @export
 exhibit.triangle <- function(tri) {
-  noquote(format(tri, big.mark = ","))
+  tri2 <- format(tri[1:nrow(tri), 1:ncol(tri)], big.mark = ",")
+  tri2 <- as.data.frame(tri2)
+  names(tri2) <- attr(tri, "dimnames")$dev
+  tri2
 }
