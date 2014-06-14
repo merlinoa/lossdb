@@ -30,7 +30,6 @@ retain <- function(ldf, value, recovery = NULL) {
   }
   if (length(proj_df) > 3) {
     proj_df$net <- proj_df$value - apply(proj_df[, 4:ncol(proj_df), drop = FALSE], 1, sum, na.rm = TRUE)
-  } 
-  class(proj_df) <- c("retain", "data.frame")
+  }
   proj_df
 }
