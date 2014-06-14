@@ -59,19 +59,28 @@ net_incurred <- function(df) {
 }
 
 # return all claims at latest evaluation date
-get_latest <- function(df, type = NULL) {
-  calendar <- get_col(df = df, type = "origin") +
-                 get_col(df = df, type = "dev")
-  attr(df, "type")[length(attr(df, "type"))] <- "calendar"
-  latest <- df[calendar == max(calendar), ]
+get_latest <- function(df) {
+  calendar <- get_calendar(df = df)
+  max_cal <- max(calendar)
+  latest <- df[calendar == max_cal, ]
   latest <- carry_attr(df1 = df, df2 = latest)
-  if (is.null(type)) {
-    return(latest)
+  return(latest)
+}
+
+
+#' return calandar year for each row
+#' 
+#' useful for finding the evaluation date if one is not supplied
+#'
+#'
+#'@param df a loss_df data frame
+get_calendar <- function(df, year = NULL) {
+  calendar <- get_col(df = df, type = "origin") +
+    get_col(df = df, type = "dev")
+  if (is.null(year)) {
+    return(calendar)
   } else {
-    latest <- get_col(df = latest, type = c("id", "origin", "dev",
-                                         "evaluation_date", type))
-    latest <- carry_attr(df1 = df, df2 = latest)
-    return(latest)
+    return(calendar[calendar == year])
   }
 }
 

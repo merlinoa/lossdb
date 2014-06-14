@@ -16,6 +16,8 @@ loss_df(ldf, id, origin, dev, evaluation_date = NULL, paid = NULL,
 
 \item{dev}{development stage of claim at relevant 'evaluation_date'}
 
+\item{evaluation_date}{optional column naming the evaluation dates}
+
 \item{paid}{vector of all paid loss columns}
 
 \item{incurred}{vector of all incurred loss columns}
@@ -48,7 +50,7 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
                  dev = evaluation_year - origin)
 
 occurences <- losses \%>\%
-group_by(claim_number, dev, evaluation_date) \%>\%
+group_by(claim_number, dev) \%>\%
   summarise(claim_cts = n(),
             payment_amount = sum(payment_amount),
             reserve_amount = sum(reserve_amount),
@@ -67,7 +69,6 @@ occurences <- mutate(occurences,
 mydf <- loss_df(occurences, id = "claim_number",
                              origin = "origin",
                              dev = "dev",
-                             evaluation_date = "evaluation_date",
                              paid = c("paid_loss_only", "paid_expense"),
                              incurred = c("incurred_loss_only", "incurred_expense"),
                              paid_recovery = c("sal_sub", "paid_excess250"),
@@ -76,7 +77,9 @@ mydf <- loss_df(occurences, id = "claim_number",
                  )
 
 # use numbers instead of character vector to identify columns
-mydf2 <- loss_df(losses2, id = 1, origin = 7, dev = 2, evaluation_date = 3,
+# also you can specify the 'evaluation' date specifically with the
+# 'evaluation_date' argument
+mydf2 <- loss_df(occurences, id = 1, origin = 7, dev = 2, evaluation_date = 3,
                  paid = c(8, 10), incurred = c(9, 11), desc = 4)
 }
 
