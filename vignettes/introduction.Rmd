@@ -77,11 +77,10 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
 # often necessary when excess reinsurance is applied on an occurence basis
 # rather than on a claims basis.
 occurences <- losses %>%
-  group_by(claim_number, dev) %>%
+  group_by(claim_number, dev, origin) %>%
      summarise(claim_cts = n(),
                payment_amount = sum(payment_amount), # paid loss & ALAE
                reserve_amount = sum(reserve_amount), # incurred loss & ALAE
-               origin = unique(origin),
                paid_expense = sum(X4_exp_payment), # paid ALAE
                incurred_expense = sum(X4_exp_reserve), #incurred ALAE
                sal_sub = sum(payment_no_reserve_a), # salvage and subrogation
