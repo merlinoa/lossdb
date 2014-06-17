@@ -1,3 +1,6 @@
+---
+output: html_document
+---
 <!--
 %\VignetteEngine{knitr::docco_linear}
 %\VignetteIndexEntry{Introduction to reserve}
