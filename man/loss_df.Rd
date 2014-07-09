@@ -45,19 +45,20 @@ or a numeric vector of the column position.
 \examples{
 # use the 'dplyr' package to get raw data in proper format for 'loss_df'
 library(dplyr)
+
 losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
                  evaluation_year = as.numeric(format(as.Date(evaluation_date, "\%Y-\%m-\%d"), "\%Y")),
                  dev = evaluation_year - origin)
 
 occurences <- losses \%>\%
-group_by(claim_number, dev) \%>\%
+group_by(claim_number, dev, origin) \%>\%
   summarise(claim_cts = n(),
             payment_amount = sum(payment_amount),
             reserve_amount = sum(reserve_amount),
-            origin = mean(origin),
             paid_expense = sum(X4_exp_payment),
             incurred_expense = sum(X4_exp_reserve),
-            sal_sub = sum(payment_no_reserve_a)
+            sal_sub = sum(payment_no_reserve_a),
+            sal_sub_incurred = sum(payment_no_reserve_a)
            )
 occurences <- mutate(occurences,
                      paid_loss_only = payment_amount - paid_expense,
@@ -72,7 +73,7 @@ mydf <- loss_df(occurences, id = "claim_number",
                              paid = c("paid_loss_only", "paid_expense"),
                              incurred = c("incurred_loss_only", "incurred_expense"),
                              paid_recovery = c("sal_sub", "paid_excess250"),
-                             incurred_recovery = "incurred_excess250",
+                             incurred_recovery = c("incurred_excess250", "sal_sub_incurred"),
                              desc = "claim_cts"
                  )
 

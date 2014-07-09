@@ -13,5 +13,15 @@
 \description{
 Return a triangle for age to age development factors
 }
+\examples{
+library(ChainLadder)
+tri <- as.triangle(recovery_ldf, origin = "origin",
+                   dev = "dev", value = "paid_loss_only")
+dev_tri <- ata(tri)
+exhibit(dev_tri, selection = c(1.9, 1.2, 1.13, 1.075, NA))
+
+# with tail factor selected
+exhibit(dev_tri, selection = c(1.9, 1.2, 1.13, 1.075, 1.1))
+}
 \keyword{internal}
 
