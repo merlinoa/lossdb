@@ -33,3 +33,49 @@ retain <- function(ldf, value, recovery = NULL) {
   }
   proj_df
 }
+
+#' returns the loss df with each type attribute summed up
+#' 
+#' @param ldf a data frame of class loss_df
+#' @param sum_types the types to be summed up.  Possible `sum_types` are `paid`, `incurred`, `paid_recovery`, and `incurred_recovery`. 
+#' 
+#' @export
+#' 
+#' @examples
+#' by_type(ldf = recovery_ldf, sum_types = "paid")
+#' by_type(ldf = recovery_ldf, sum_types = c("paid", "incurred")
+sum_by_type <- function(ldf, sum_types) {
+  smry_df <- get_col(df = ldf, type = c("id", "origin", "dev"))
+  # summed types
+  summed_types <- lapply(sum_types, function(y) sum_type(df = ldf, type = y))
+  smry_df <- cbind(smry_df, as.data.frame(summed_types))
+  names(smry_df) <- c(get_colname(df = ldf, type = c("origin", "dev")), sum_types)
+  smry_df
+}
+
+
+#' returns the total gross paid amounts per claim
+#' 
+#' @param ldf a data frame of class loss_df
+#' 
+#' @export
+#' 
+#' @examples
+#' paid(recovery_ldf)
+paid <- function(ldf) {
+  sum_by_type(ldf, sum_types = "paid")
+}
+
+#' returns the total gross incurred amounts per claim
+#' 
+#' 
+#' @param ldf a data frame of class loss_df
+#' 
+#' @export
+#' 
+#' @examples
+#' paid(recovery_ldf)
+incurred <- function(ldf) {
+  sum_by_type(ldf, sum_types = "paid")
+}
+
