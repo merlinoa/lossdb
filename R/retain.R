@@ -49,7 +49,7 @@ sum_by_type <- function(ldf, sum_types) {
   # summed types
   summed_types <- lapply(sum_types, function(y) sum_type(df = ldf, type = y))
   smry_df <- cbind(smry_df, as.data.frame(summed_types))
-  names(smry_df) <- c(get_colname(df = ldf, type = c("origin", "dev")), sum_types)
+  names(smry_df) <- c(get_colname(df = ldf, type = c("id", "origin", "dev")), sum_types)
   smry_df
 }
 
