@@ -41,6 +41,8 @@
 claim_changes <- function(ldf, eval1, eval2, values = NULL) {
   non_values <- get_colnum(df = ldf, type = c("dev", "evaluation_date"))
   # select values to be compared depending on 'values' argument
+  # and create new data frame of one data frame at each evaluation date
+  # merged into one.
   if (is.null(values)) {
     comparison <- merge_loss_df(ldf, eval1 = eval1, eval2 = eval2,
                                 by = c("id", "origin"), exclude = non_values)
@@ -48,25 +50,17 @@ claim_changes <- function(ldf, eval1, eval2, values = NULL) {
     values <- setdiff(names(ldf), c(get_colname(df = ldf, type = c("id", "origin", "dev", "evaluation_date"))))
   } else {
     values <- num_to_name(df = ldf, value = values)
-    ldf <- loss_df(ldf = ldf,
-                  id = get_colname(ldf, "id"),
-                  origin = get_colname(ldf, "origin"),
-                  dev = get_colname(ldf, "dev"),
-                  evaluation_date = get_colname(ldf, "evaluation_date"),
-                  paid = intersect(values, get_colname(ldf, "paid")),
-                  incurred = intersect(values, get_colname(ldf, "incurred")),
-                  paid_recovery = intersect(values, get_colname(ldf, "paid_recovery")),
-                  incurred_recovery = intersect(values, get_colname(ldf, "incurred_recovery")),
-                  desc = intersect(values, get_colname(ldf, "desc")))
-    comparison <- merge_loss_df(ldf, eval1 = eval1, eval2 = eval2, 
+    ldf2 <- ldf[, c(get_colname(df = ldf, type = c("id", "origin", "dev", "evaluation_date")), values)]
+    ldf2 <- carry_attr(ldf, ldf2)
+    comparison <- merge_loss_df(ldf2, eval1 = eval1, eval2 = eval2, 
                                 by = c("id", "origin"), exclude = non_values)
   }
+  # create change columned columns
   for (i in 1:length(values)) {
     comparison[, length(comparison) + 1] <- comparison[, paste0(values[i], "_", eval1)] -
       comparison[, paste0(values[i], "_", eval2)]
     names(comparison)[length(comparison)] <- paste0(values[i], "_change")
   }
-  
   # find all rows containing differing values
   change <- apply(comparison[, (length(comparison) + 1 - length(values)):length(comparison), drop = FALSE], 1, 
                   function(x) ifelse(isTRUE(all.equal(x, rep(0, length(x)), check.attributes = FALSE, tolerance = .005)), FALSE, TRUE))
