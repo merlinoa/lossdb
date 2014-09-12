@@ -3,42 +3,51 @@ output: html_document
 ---
 <!--
 %\VignetteEngine{knitr::docco_linear}
-%\VignetteIndexEntry{Introduction to reserve}
+%\VignetteIndexEntry{Introduction to lossdb}
 -->
 
 ```{r, echo = FALSE, message = FALSE}
-library(reserve)
+library(lossdb)
 knitr::opts_chunk$set(
   comment = "#>",
   tidy = FALSE)
 ```
 
-# Introduction to reserve
-The goal of this document is to introduce the basic tools `reserve` provides, and to walk through a realistic example using the `reserve` package.  This vignette and package are nowhere near complete.  I am creating the vignette in conjunction with the package to help keep my thoughts in line, and to remind me where I left off.
+# Introduction to lossdb
 
-The following Background section is taken from the `ChainLadder` package vignette [Claims reserving with R: Chainladder-0.1.7 Package Vignette](http://cran.r-project.org/web/packages/ChainLadder/vignettes/ChainLadder.pdf) by Markus Gesmann.
+The goal of this document is to introduce the basic tools `lossdb` provides, and to walk through a realistic example using the `lossdb` package.  This vignette and package are still in their early stages of development...
 
-## Background: Claims reserving in Insurance
+## Background: Actuaries and Insurance Loss Data
 
-Unlike other industries the insurance industry does not sell products as such, but promises.  An insurance policy is a promise by the insurer to the policyholder to pay for future claims for an upfront received premium.
+The largest and most important data sets actuaries commonly work with are data sets describing the value and nature of insurance losses.  These data sets are often provided on a "by claim" basis (i.e. each row represents a claim and each column a variable).  These "by claim" data data sets, which I will call "loss data", are provided in a different format by every company, and often times many different formats by the same company.  A thorough combing of the loss data is often necessary to determine what each column is communicating and what columns are relevant to the analysis.  Additionally there are almost always errors that need to be addressed.  Understanding the underlying structure of the columns and ways to identify common errors can significantly improve the overall analysis process.
 
-As a result insurers don't know the upfront cost of their service, but rely on historical data analysis and judgement to derive a sustainable price for their offering.  In General Insurance (or Non-Life Insurance, e.g. motor, property and casualty insurance) most policies run for a period of 12 months.  However, the claims payment process can take years or even decades.  Therefore often not even the delivery date of their product is known to insurers.  
+Loss data will often have many columns representing different dollar amounts.  I refer to the columns representing dollar amounts as the "value"
+columns.  All the information contained in the value columns can be categorized into 4 different groups without loosing any information.  Each of these 4 groups can contain as many columns as neccessary to contain a full description of the data.  The 4 groups containing all the information in the value columns are:
 
-In particular claims arising from casualty insurance can take a long time to settle.  Claims can take years to materialise.  A complex and costly example are the claims from asbestos liabilities.  A research report by a working party of the Institute of Actuaries has estimated that the undiscounted cost of UK mesothelioma-related claims to the UK Insurance Market for the period 2009 to 2050 could be around 10bn pounds.  The cost for asbestos related claims in the US for the worldwide insurance industry was estimated to be around $120bn in 2002.
+* paid - actual amounts already paid
+* incurred - amounts incurred (i.e. total amount expected to be paid by the insurance company before the claim is closed)
+* paid_recovery - actual paid reimbursements (e.g. amount under deductible)
+* incurred_recovery - incurred reimbursements
 
-Thus, it should come to no surprise that the biggest item on the liability side of an insurer's balance sheet is often the provision or reserves for future claims payments.  Those reserves can be broken down in case reserves (or out-standing claims), which are losses already reported to the insurance company and incurred but not reported (IBNR) claims.
+Note:  A case reserve amount could be used in place of incurred.  Either one would work.
+
+All the other columns included in loss data provide some type of description of the claim (e.g. claimant name, whether the claim is open or closed, etc.).  I refer to all of these columns as "description" columns.  There can be any number of description columns and `lossdb` does not consider any logical way to group them.
+
+`lossdb` is designed to utilize the fundamental underlayings of loss data to make to make it easier to work with. 
 
 ## Motivation
 
-It is often difficult to create reproducible actuarial reserve reports using a spreadsheet gui.  R has many advantages over spreadsheets (in R you type commands rather than pointing and clicking, R can work with larger datasets, etc.). The goal of the `reserve` package is to provide a standard process for creating reserve reports using R. `reserve` provides a standard means of storing your claims data so you can use the same set of functions (defined by `reserve`) to automate many repetetive reserving tasks and create reproducible reports that are generated directly from the original claim loss detail.
+I want to make reproducible actuarial reports in R.  Getting unclean data ready for analysis is a pain in the ass, and once the data is clean it is nice to have it in some kind of a standard format so you can do similar things to data whenever you get it into that format... enter `lossdb`
 
-When a reserve report is not directly created from the the original loss detail the report loses flexibility (e.g. If you create a development triangle using no excess retention limits it can be very time time consuming to create a new development triangle based on an excess retention limit of say 250,000 because the data is summarized on an origin period basis; claim detail is lost). This practice of using data summarized on an origin period basis is popular when using spreadsheets because keeping all the historical loss information in one spreadsheet quickly results in data sets too large for the spreadsheet to handle.  I run into problems after a couple hundred thousand rows using Excel 2010.
+The goal of the `lossdb` package is to provide standard functions for manipulating and visualizing loss data. `lossdb` provides a standard means of storing your claims data so you can use the same set of functions (defined by `lossdb`) to automate many repetetive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
 
-The `reserve` package improves flexibility in reserve report creation by maintaining access to all the original claim detail (i.e. each report is generated from the original claim data as opposed to a summary of the original claim data); `reserve` makes the reserve report generation process reproducible.  `reserve` provides a standard format for storing claim loss detail and provides a set of functions specific to that standard format.  
+When a reserve report is not directly created from the the original loss data the report loses flexibility.  This loss of flexibility leads to huge problems that people are paid a lot of money to fuddle with every day.  They should stop fuddling and use R... anyways...
+
+When using R one can easilty improve the flexibility of their reports by maintaining access to all the original claim detail (i.e. each report can be generated from the original claim data as opposed to a summary and a bunch of copy and pastes of the original claim data). In summary, `lossdb` provides a standard format for storing loss data and provides a set of functions specific to that standard format.  The fact that the entire report can be done in R is what makes it more easily reproducible.  `lossdb` just makes it a little easier to go from raw data to a final report in R.
 
 ## Getting Started
 
-The standard format `reserve` uses to store claim loss data is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is categorized and organized differently from company to company. 
+The standard format `lossdb` uses to store claim loss data is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is categorized and organized differently from company to company. 
 
 The rest of this vignette will guide you through an example using reserve.  The example will proceed as follows:
 * Taking a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transforming that data set into a `loss_df` object that contains and organizes all the information relevant to the reserve analysis.
