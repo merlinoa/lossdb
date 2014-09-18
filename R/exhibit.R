@@ -60,7 +60,7 @@ exhibit.ata <- function(ata, selection = NULL) {
 exhibit.triangle <- function(tri) {
   xhbt <- format(tri[1:nrow(tri), 1:ncol(tri)], big.mark = ",")
   xhbt <- as.data.frame(xhbt)
-  names(xhbt) <- attr(tri, "dimnames")$dev
+  names(xhbt) <- attr(tri, "dimnames")[[2]]
   xhbt
 }
 
