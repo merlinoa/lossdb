@@ -37,8 +37,14 @@ exhibit <- function(data, ...) UseMethod("exhibit")
 #' # with tail factor selected
 #' exhibit(dev_tri, selection = c(1.9, 1.2, 1.13, 1.075, 1.1))
 exhibit.ata <- function(ata, selection = NULL) {
+  
+  # extract development table from ata object
   xhbt <- as.data.frame(ata[1:nrow(ata), 1:ncol(ata)])
-  final_col_name <- paste0(substr(colnames(xhbt[, ncol(xhbt), drop = FALSE]), 3, 3), "-Ult.")
+  
+  # create name for final column
+  final_col_name <- paste0(ncol(xhbt) + 1, "-Ult.")
+  
+  # create final column
   final_col <- data.frame(rep(NA, times = nrow(xhbt)))
   names(final_col) <- final_col_name
   xhbt <- cbind(xhbt, final_col)
