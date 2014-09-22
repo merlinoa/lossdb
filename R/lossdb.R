@@ -1,7 +1,7 @@
-#' The reserve package.
+#' The lossdb package.
 #' 
 #' @docType package
-#' @name reserve
+#' @name lossdb
 #' @import ggplot2
 #' @import reshape2
 #' @import ChainLadder
