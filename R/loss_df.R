@@ -1,15 +1,15 @@
 #' loss_df S3 class constructor
 #' 
-#' \code{loss_df} is the primary S3 data class for the \code{reserve}
+#' \code{loss_df} is the primary S3 data class for the \code{lossdb}
 #' package.  A \code{loss_df} is a data frame for claims loss 
 #' information of a non life insurance line of business.  The data frame 
 #' is structured on a claim or occurence basis (i.e. each row represents 1 claim 
 #' or 1 claim occurence) evaluated at a specific time.
 #' 
 #' @param df a data frame containing the raw data of losses by claim
-#' @param id identification key of claim
 #' @param origin time period in which the claim originated
 #' @param dev development stage of claim at relevant 'evaluation_date'
+#' @param id optional identification key of claim
 #' @param evaluation_date optional column naming the evaluation dates
 #' @param paid vector of all paid loss columns
 #' @param incurred vector of all incurred loss columns
@@ -19,7 +19,7 @@
 #'   'open claims', and 'reported claims' (when claims are evaluated on an occurence basis)  
 #' 
 #' @details \code{loss_df} is designed to assign descriptive and consistent names 
-#' to loss data so analysis with the \code{reserve} package can be possible. The relevant
+#' to loss data to allow for easier data analysis. The relevant
 #' columns can be assigned to the above arguments using a character vector of the column names
 #' or a numeric vector of the column position.
 #' 
@@ -49,7 +49,7 @@
 #'                      incurred_excess250 = max(reserve_amount - 250000, 0))
 #' 
 #' # create loss_df object
-#' mydf <- loss_df(occurences, id = "claim_number",
+#' mydf <- loss_df(occurences,  id = "claim_number",
 #'                              origin = "origin", 
 #'                              dev = "dev", 
 #'                              paid = c("paid_loss_only", "paid_expense"),
@@ -64,7 +64,7 @@
 #' # 'evaluation_date' argument
 #' mydf2 <- loss_df(occurences, id = 1, origin = 7, dev = 2, evaluation_date = 3,
 #'                  paid = c(8, 10), incurred = c(9, 11), desc = 4)
-loss_df <- function(ldf, id, origin, dev, evaluation_date = NULL, paid = NULL, 
+loss_df <- function(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL, 
                     incurred = NULL, paid_recovery = NULL, incurred_recovery = NULL,
                     desc = NULL) {
   # create list with bin for each attribute 'type'
@@ -234,26 +234,28 @@ plot.loss_df <- function(ldf, evaluation_date = NULL) {
 #' @param df a loss_df to check
 check_loss_df <- function(ldf) {
   # check that required cols (id, origin and dev) each exist
-  if (!identical(intersect(c("id", "origin", "dev"), attr(ldf, "type")),
-                c("id", "origin", "dev"))) {
-    stop("'id', 'origin', and 'dev' are required arguments")
+  if (!identical(intersect(c("origin", "dev"), attr(ldf, "type")),
+                c("origin", "dev"))) {
+    stop("'origin' and 'dev' are required arguments")
   }
   # check that 'origin' and 'dev' are each only 1 column
   if (length(get_colname(df = ldf, c("origin", "dev"))) != 2) {
-    stop("id, origin, and dev can only reference 1 column each")
+    stop("'origin' and 'dev' can only reference 1 column each")
   }
-  # check to see that at least some loss data supplied
+  # check to see that at least 1 column of loss data was supplied
   if (length(get_colname(df = ldf, c("paid", "incurred", "paid_recovery",
-                                      "incurred_recovery", "desc"))) == 0) {
-    stop("Some loss data must be provided")
+                                      "incurred_recovery", "desc"))) < 1) {
+    stop("At least 1 column of loss data must be provided")
   }
+  
+  # chack that columns are of correct type
   factor_cols <- get_colname(df = ldf, c("id", "evaluation_date"))
   numeric_cols <- get_colname(df = ldf, c("origin", "dev", "paid", "incurred",
                                           "paid_recovery", "incurred_recovery", "desc"))
   if (!all(unlist(lapply(ldf[, factor_cols], is.factor)))) {
-    stop("set 'id' and 'evaluation_date' to factor")
+    stop("set 'id' and or 'evaluation_date' of type factor")
   }
   if (!all(unlist(lapply(ldf[, numeric_cols], is.numeric)))) {
-    stop("All columns other than 'id' and 'evaluation_date' must be numeric")  
+    stop("All columns other than 'id' and 'evaluation_date' must be of type numeric")  
   }
 }

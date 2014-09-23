@@ -39,10 +39,16 @@
 #' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30", 
 #'         values = c(6, 8, 9))
 claim_changes <- function(ldf, eval1, eval2, values = NULL) {
+  if (length(get_colnum(df = ldf, type = "id")) == 0) {
+    stop("A claim 'id' bust be supplied when constructing your 'loss_df' to use the 'claim_changes' function")
+  }
+  
+  # idenity columns not to be compared
   non_values <- get_colnum(df = ldf, type = c("dev", "evaluation_date"))
+  
   # select values to be compared depending on 'values' argument
-  # and create new data frame of one data frame at each evaluation date
-  # merged into one.
+  # and create new data frame of one data frame at each of the two evaluation dates
+  # merged into one data frame by 'id' and 'origin'
   if (is.null(values)) {
     comparison <- merge_loss_df(ldf, eval1 = eval1, eval2 = eval2,
                                 by = c("id", "origin"), exclude = non_values)
