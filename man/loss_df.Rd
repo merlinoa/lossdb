@@ -3,16 +3,16 @@
 \alias{loss_df}
 \title{loss_df S3 class constructor}
 \usage{
-loss_df(ldf, id, origin, dev, evaluation_date = NULL, paid = NULL,
+loss_df(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL,
   incurred = NULL, paid_recovery = NULL, incurred_recovery = NULL,
   desc = NULL)
 }
 \arguments{
-\item{id}{identification key of claim}
-
 \item{origin}{time period in which the claim originated}
 
 \item{dev}{development stage of claim at relevant 'evaluation_date'}
+
+\item{id}{optional identification key of claim}
 
 \item{evaluation_date}{optional column naming the evaluation dates}
 
@@ -30,7 +30,7 @@ loss_df(ldf, id, origin, dev, evaluation_date = NULL, paid = NULL,
 \item{df}{a data frame containing the raw data of losses by claim}
 }
 \description{
-\code{loss_df} is the primary S3 data class for the \code{reserve}
+\code{loss_df} is the primary S3 data class for the \code{lossdb}
 package.  A \code{loss_df} is a data frame for claims loss
 information of a non life insurance line of business.  The data frame
 is structured on a claim or occurence basis (i.e. each row represents 1 claim
@@ -38,7 +38,7 @@ or 1 claim occurence) evaluated at a specific time.
 }
 \details{
 \code{loss_df} is designed to assign descriptive and consistent names
-to loss data so analysis with the \code{reserve} package can be possible. The relevant
+to loss data to allow for easier data analysis. The relevant
 columns can be assigned to the above arguments using a character vector of the column names
 or a numeric vector of the column position.
 }
@@ -67,7 +67,7 @@ occurences <- mutate(occurences,
                      incurred_excess250 = max(reserve_amount - 250000, 0))
 
 # create loss_df object
-mydf <- loss_df(occurences, id = "claim_number",
+mydf <- loss_df(occurences,  id = "claim_number",
                              origin = "origin",
                              dev = "dev",
                              paid = c("paid_loss_only", "paid_expense"),
