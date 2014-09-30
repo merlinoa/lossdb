@@ -1,20 +1,20 @@
 #' loss_df S3 class constructor
 #' 
 #' \code{loss_df} is the primary S3 data class for the \code{lossdb}
-#' package.  A \code{loss_df} is a data frame for claims loss 
-#' information of a non life insurance line of business.  The data frame 
+#' package.  A \code{loss_df} is a data frame for insurance loss data.  The data frame 
 #' is structured on a claim or occurence basis (i.e. each row represents 1 claim 
-#' or 1 claim occurence) evaluated at a specific time.
+#' or 1 claim occurence) evaluated at a specific time, and each column contains
+#' certain variables attributable to the claim at that evaluation time.
 #' 
 #' @param df a data frame containing the raw data of losses by claim
 #' @param origin time period in which the claim originated
 #' @param dev development stage of claim at relevant 'evaluation_date'
 #' @param id optional identification key of claim
 #' @param evaluation_date optional column naming the evaluation dates
-#' @param paid vector of all paid loss columns
-#' @param incurred vector of all incurred loss columns
-#' @param paid_recovery vector of all paid recovery columns
-#' @param incurred_recovery vector of all incurred recovery columns
+#' @param paid vector listing names or numbers for all paid loss columns
+#' @param incurred vector listing names or numbers for all incurred loss columns
+#' @param paid_recovery vector listing names of numbers for all paid recovery columns
+#' @param incurred_recovery vector listing names or numbers for all incurred recovery columns
 #' @param desc vector of all additional columns relevant to the analysis. Common examples are 
 #'   'open claims', and 'reported claims' (when claims are evaluated on an occurence basis)  
 #' 
@@ -25,30 +25,7 @@
 #' 
 #' @export
 #' @examples
-#' # use the 'dplyr' package to get raw data in proper format for 'loss_df'
-#' library(dplyr)
-#' 
-#' losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
-#'                  evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")),
-#'                  dev = evaluation_year - origin)
-#' 
-#' occurences <- losses %>%
-#' group_by(claim_number, dev, origin) %>%
-#'   summarise(claim_cts = n(),
-#'             payment_amount = sum(payment_amount),
-#'             reserve_amount = sum(reserve_amount),
-#'             paid_expense = sum(X4_exp_payment),
-#'             incurred_expense = sum(X4_exp_reserve),
-#'             sal_sub = sum(payment_no_reserve_a),
-#'             sal_sub_incurred = sum(payment_no_reserve_a)
-#'            )
-#' occurences <- mutate(occurences,
-#'                      paid_loss_only = payment_amount - paid_expense,
-#'                      incurred_loss_only = reserve_amount - incurred_expense,
-#'                      paid_excess250 = max(payment_amount - 250000, 0),
-#'                      incurred_excess250 = max(reserve_amount - 250000, 0))
-#' 
-#' # create loss_df object
+#' # create loss_df object from `occurences` dataset
 #' mydf <- loss_df(occurences,  id = "claim_number",
 #'                              origin = "origin", 
 #'                              dev = "dev", 
@@ -58,16 +35,11 @@
 #'                              incurred_recovery = c("incurred_excess250", "sal_sub_incurred"),
 #'                              desc = "claim_cts"
 #'                  )
-#'                  
-#' # use numbers instead of character vector to identify columns
-#' # also you can specify the 'evaluation' date specifically with the 
-#' # 'evaluation_date' argument
-#' mydf2 <- loss_df(occurences, id = 1, origin = 7, dev = 2, evaluation_date = 3,
-#'                  paid = c(8, 10), incurred = c(9, 11), desc = 4)
 loss_df <- function(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL, 
                     incurred = NULL, paid_recovery = NULL, incurred_recovery = NULL,
                     desc = NULL) {
-  # create list with bin for each attribute 'type'
+  
+  # create list with bin for each attribute `type`
   values <- list(id = id,
                  origin = origin,
                  dev = dev,
@@ -78,30 +50,37 @@ loss_df <- function(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = 
                  incurred_recovery = incurred_recovery,
                  desc = desc
                  )
-  values <- lapply(values, num_to_name, df = ldf)
-  #change relevant columns to new names
-  relevant <- match(unlist(values), colnames(ldf))
-  relevant <- relevant[!is.na(relevant)]
-  df2 <- ldf[, relevant]
-  # applying attributes
+  
+  # select relevant columns from supplied data frame and create new data frame
+  df2 <- ldf[, unlist(values)]
+  
+  # creating vector for 'type' attribute
   n <- unlist(lapply(values, length))
   atr <- list()
   for (i in 1:length(values)) {
     atr[[i]] <- rep(names(values)[i], n[i])
   }
-  # set type attribute for data frame
+  
+  # attaching type attribute to data frame
   attr(df2, "type") <- unlist(atr)
+  
   # if no 'evaluation_date' specified set 'evaluation_date' equal
   # to calendar
   if (is.null(evaluation_date)) {
     df2$evaluation_date <- as.factor(get_calendar(df = df2))
     attr(df2, "type")[length(attr(df2, "type")) + 1] <- "evaluation_date"
   }
+  
   # define data.frame class as "loss.df"
   class(df2) <- c("loss_df", "data.frame")
+  
+  # run automated check
   check_loss_df(df2)
+  
+  # return 'loss_df' object
   df2
 }
+
 
 #' Is an object a loss_df object
 #' 
@@ -110,54 +89,73 @@ loss_df <- function(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = 
 #' @keywords internal
 is.loss_df <- function(x) inherits(x, "loss_df")
 
-#' get the sum of loss_df data by origin period
+
+#' returns the grouped sum of loss_df columns by origin period
 #' 
 #' @param ldf loss_df S3 object
 #' @param values optional - select specific values to summarize
 #' @param evaluation_date optional evaluation date
 #' 
-#' @keywords internal
 #' @method summary loss_df
-#' @method evaluation_date
+#' 
+#' @description summary.loss_df can provides snapshot for any columns
+#' or `type` attributes in a `loss_df` object.
 #' 
 #' @export
 #' @examples
+#' 
 #' # without specificied `evaluation_date`
 #' summary(recovery_ldf)
 #' 
 #' # with specified `evaluation_date`
 #' summary(recovery_ldf, evaluation_date = "2012-06-30")
+#' 
+#' # with specified `values`
 #' summary(recovery_ldf, values = c("paid_excess250", "sal_sub", "paid"))
 summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
   if (is.null(evaluation_date)){
+    
+    # select columns to summarize at latest evaluation date
     latest <- get_latest(df = ldf) 
     exclude <- get_colnum(df = latest, type = c("id", "dev", "evaluation_date", "origin"))
     latest_values <- latest[, -exclude]
     latest_values <- carry_attr(df1 = latest, df2 = latest_values)
+    
+    # sum columns by origin
     smry <- apply(latest_values, 2,
                   function(x) tapply(x, get_col(df = latest, type = "origin"), sum, na.rm = TRUE))
   } else {
+    
+    # select columns to summarize at supplied evaluation date
     selected <- ldf[get_col(df = ldf, type = "evaluation_date") == evaluation_date, 
                     -get_colnum(df = ldf, type = c("id", "dev", "evaluation_date"))]
     selected <- carry_attr(df1 = ldf, df2 = selected)
+    # sum columns by origin
     smry <- apply(selected[, -which(names(selected) %in% get_colname(df = selected, type = "origin"))], 2,
                   function(x) tapply(x, get_col(df = selected, type = "origin"), sum, na.rm= TRUE))
   }
+  
+  # move 'origin' column from rowname into actual data frame
   origin <- data.frame(rownames(smry))
   names(origin) <- get_colname(df = ldf, type = "origin")
   smry <- cbind(origin, smry)
   rownames(smry) <- NULL
   smry <- carry_attr(df1 = ldf, df2 = smry)
+  
+  
   if (is.null(values)) {
     return(smry)
-  } else {
-    types <- c("paid", "incurred", "paid_recovery", "incurred_recovery")
+  } else {   
+    
+    # select `origin` column
     smry2 <- get_col(df = smry, type = "origin", drop = FALSE)
-    # summarize `type` by summing
-    for (i in intersect(values, types)) {
+    
+    # summarize `type` by adding columns of same type together
+    for (i in intersect(values, types$all)) {
       smry2[, i] <- sum_type(df = smry, type = i)
     }
-    # return specific columns
+    
+    # return specific columns based on supplied column name
     for (j in intersect(values, names(smry))) {
       smry2[, j] <- smry[, j, drop = FALSE]
     }

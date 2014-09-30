@@ -1,11 +1,8 @@
-#' Data descriptive of the workers' compensation claims data in \code{\link{losses}}
+#' A cleaned version of the \code{\link{losses}} dataset
 #'
 #' @docType data
-#' @description a data frame detailing premium, payroll, excess reinsurance coverage
-#' and applicable deductibles for the \code{\link{losses}} and \code{\link{losses_loss_df}}
-#' data sets
 #' 
-#' @name general
+#' @name occurences
 NULL
 
 
@@ -36,4 +33,18 @@ NULL
 #' @format A \code{\link{loss_df}} object  with 8,054 observations on 9 variables. 
 #'  
 #' @name losses_ldf
+NULL
+
+
+
+#' example workers' compensation loss_df
+#'
+#' @description This is a cleaned version of the \code{losses} data frame.  It was created
+#' using the \code{\link{loss_df}} function.
+#' 
+#' @usage losses_ldf
+#'  
+#' @format A \code{\link{loss_df}} object  with 8,054 observations on 12 variables. 
+#'  
+#' @name recovery_ldf
 NULL

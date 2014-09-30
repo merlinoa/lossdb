@@ -16,13 +16,13 @@ loss_df(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL,
 
 \item{evaluation_date}{optional column naming the evaluation dates}
 
-\item{paid}{vector of all paid loss columns}
+\item{paid}{vector listing names or numbers for all paid loss columns}
 
-\item{incurred}{vector of all incurred loss columns}
+\item{incurred}{vector listing names or numbers for all incurred loss columns}
 
-\item{paid_recovery}{vector of all paid recovery columns}
+\item{paid_recovery}{vector listing names of numbers for all paid recovery columns}
 
-\item{incurred_recovery}{vector of all incurred recovery columns}
+\item{incurred_recovery}{vector listing names or numbers for all incurred recovery columns}
 
 \item{desc}{vector of all additional columns relevant to the analysis. Common examples are
   'open claims', and 'reported claims' (when claims are evaluated on an occurence basis)}
@@ -31,10 +31,10 @@ loss_df(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL,
 }
 \description{
 \code{loss_df} is the primary S3 data class for the \code{lossdb}
-package.  A \code{loss_df} is a data frame for claims loss
-information of a non life insurance line of business.  The data frame
+package.  A \code{loss_df} is a data frame for insurance loss data.  The data frame
 is structured on a claim or occurence basis (i.e. each row represents 1 claim
-or 1 claim occurence) evaluated at a specific time.
+or 1 claim occurence) evaluated at a specific time, and each column contains
+certain variables attributable to the claim at that evaluation time.
 }
 \details{
 \code{loss_df} is designed to assign descriptive and consistent names
@@ -43,30 +43,7 @@ columns can be assigned to the above arguments using a character vector of the c
 or a numeric vector of the column position.
 }
 \examples{
-# use the 'dplyr' package to get raw data in proper format for 'loss_df'
-library(dplyr)
-
-losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
-                 evaluation_year = as.numeric(format(as.Date(evaluation_date, "\%Y-\%m-\%d"), "\%Y")),
-                 dev = evaluation_year - origin)
-
-occurences <- losses \%>\%
-group_by(claim_number, dev, origin) \%>\%
-  summarise(claim_cts = n(),
-            payment_amount = sum(payment_amount),
-            reserve_amount = sum(reserve_amount),
-            paid_expense = sum(X4_exp_payment),
-            incurred_expense = sum(X4_exp_reserve),
-            sal_sub = sum(payment_no_reserve_a),
-            sal_sub_incurred = sum(payment_no_reserve_a)
-           )
-occurences <- mutate(occurences,
-                     paid_loss_only = payment_amount - paid_expense,
-                     incurred_loss_only = reserve_amount - incurred_expense,
-                     paid_excess250 = max(payment_amount - 250000, 0),
-                     incurred_excess250 = max(reserve_amount - 250000, 0))
-
-# create loss_df object
+# create loss_df object from `occurences` dataset
 mydf <- loss_df(occurences,  id = "claim_number",
                              origin = "origin",
                              dev = "dev",
@@ -76,11 +53,5 @@ mydf <- loss_df(occurences,  id = "claim_number",
                              incurred_recovery = c("incurred_excess250", "sal_sub_incurred"),
                              desc = "claim_cts"
                  )
-
-# use numbers instead of character vector to identify columns
-# also you can specify the 'evaluation' date specifically with the
-# 'evaluation_date' argument
-mydf2 <- loss_df(occurences, id = 1, origin = 7, dev = 2, evaluation_date = 3,
-                 paid = c(8, 10), incurred = c(9, 11), desc = 4)
 }
 
