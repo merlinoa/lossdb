@@ -45,7 +45,7 @@ claim_changes <- function(ldf, calendar1, calendar2, values = NULL) {
   
   # columns to exclude
   x_cols <- get_colnum(df = ldf, type = c("dev", "calendar"))
-  by_vars <- get_colnum(df = ldf, c("id", "origin"))
+  by_vars <- get_colname(df = ldf, c("id", "origin"))
   
   # select values to be compared depending on 'values' argument
   # and create new data frame of one data frame at each of the two evaluation dates
