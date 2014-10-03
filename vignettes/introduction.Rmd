@@ -129,6 +129,7 @@ Each column has an attribute specifying the `type` of loss detail that the colum
 ### Review the data
 
 Now we can use the `lossdb` package to review the data.  Let's start by seeing a summary of the most recent loss detail summarized by origin period.
+
 ```{r}
 summary(mydf)
 ```
@@ -142,20 +143,22 @@ summary(mydf, evaluation_date = "2012")
 Note: the default `evaluation_date` if none is supplied to the `loss_df` function is set to the `origin` period plus the `dev`. (e.g.) The `evaluation_date` for all claims in origin year 2010 at their first `evaluation_date` would be 2011.
 
 and the build in bar chart representation of the data...
+
 ```{r}
 plot(mydf)
 ```
 
-and plotted at an alternative `evaluation_date`
+and plotted at an alternative `calendar`
+
 ```{r}
-plot(mydf, evaluation_date = "2012")
+plot(mydf, calendar = "2012")
 ```
 
 We can return a data frame of all the claims that have experienced a change from one evaluation date to another by using the `claim_changes()` function:
 
 ```{r}
 # specify the loss amount values you want to see the changed claims for 
-mychanges <- claim_changes(mydf, eval1 = "2013", eval2 = "2012",
+mychanges <- claim_changes(mydf, calendar1 = "2013", calendar2 = "2012",
                             values = c("paid_loss", "claim_cts"))
 head(mychanges)
 ```
@@ -179,6 +182,7 @@ There are no missing claims or claims with a decrease in `paid_loss`.  After thi
 ### Create Projections
 
 Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, paid loss & ALAE net of all recoveries, medical only paid loss & ALAE gross of all recoveries, etc.).  The `retain` function specifies the values to be projected.
+
 ```{r}
 # include recovery detail by category: `sal_sub_paid` and `paid_excess250`
 value2project <- retain(mydf, value = "paid", recovery = c("paid_excess250", "sal_sub_paid"))

@@ -3,12 +3,12 @@
 \alias{get_calendar}
 \title{return calandar year for each row}
 \usage{
-get_calendar(df, year = NULL)
+get_calendar(df)
 }
 \arguments{
 \item{df}{a loss_df data frame}
 }
 \description{
-useful for finding the evaluation date if one is not supplied
+usefu
 }
 

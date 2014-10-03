@@ -4,13 +4,12 @@
 #' package.  A \code{loss_df} is a data frame for insurance loss data.  The data frame 
 #' is structured on a claim or occurence basis (i.e. each row represents 1 claim 
 #' or 1 claim occurence) evaluated at a specific time, and each column contains
-#' certain variables attributable to the claim at that evaluation time.
+#' certain variables attributable to the claim at that evaluation (i.e. calendar) time.
 #' 
 #' @param df a data frame containing the raw data of losses by claim
 #' @param origin time period in which the claim originated
-#' @param dev development stage of claim at relevant 'evaluation_date'
+#' @param dev development stage of claim at relevant calendar time
 #' @param id optional identification key of claim
-#' @param evaluation_date optional column naming the evaluation dates
 #' @param paid vector listing names or numbers for all paid loss columns
 #' @param incurred vector listing names or numbers for all incurred loss columns
 #' @param paid_recovery vector listing names of numbers for all paid recovery columns
@@ -35,15 +34,13 @@
 #'                              incurred_recovery = c("incurred_excess250", "sal_sub_incurred"),
 #'                              desc = "claim_cts"
 #'                  )
-loss_df <- function(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL, 
-                    incurred = NULL, paid_recovery = NULL, incurred_recovery = NULL,
-                    desc = NULL) {
+loss_df <- function(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL, 
+                    paid_recovery = NULL, incurred_recovery = NULL, desc = NULL) {
   
   # create list with bin for each attribute `type`
   values <- list(id = id,
                  origin = origin,
                  dev = dev,
-                 evaluation_date = evaluation_date,
                  paid = paid,
                  incurred = incurred,
                  paid_recovery = paid_recovery,
@@ -64,12 +61,9 @@ loss_df <- function(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = 
   # attaching type attribute to data frame
   attr(df2, "type") <- unlist(atr)
   
-  # if no 'evaluation_date' specified set 'evaluation_date' equal
-  # to calendar
-  if (is.null(evaluation_date)) {
-    df2$evaluation_date <- as.factor(get_calendar(df = df2))
-    attr(df2, "type")[length(attr(df2, "type")) + 1] <- "evaluation_date"
-  }
+  # set `calendar`
+  df2$calendar <- get_calendar(df = df2)
+  attr(df2, "type")[length(attr(df2, "type")) + 1] <- "calandar"
   
   # define data.frame class as "loss.df"
   class(df2) <- c("loss_df", "data.frame")
@@ -94,7 +88,7 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' 
 #' @param ldf loss_df S3 object
 #' @param values optional - select specific values to summarize
-#' @param evaluation_date optional evaluation date
+#' @param calendar optional calendar period (i.e. calendar = origin + dev)
 #' 
 #' @method summary loss_df
 #' 
@@ -104,20 +98,20 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' @export
 #' @examples
 #' 
-#' # without specificied `evaluation_date`
-#' summary(recovery_ldf)
+#' # without specificied `calendar`
+#' summary(ldf_data)
 #' 
-#' # with specified `evaluation_date`
-#' summary(recovery_ldf, evaluation_date = "2012-06-30")
+#' # with specified `calendar`
+#' summary(ldf_data, calendar = "2012-06-30")
 #' 
 #' # with specified `values`
-#' summary(recovery_ldf, values = c("paid_excess250", "sal_sub", "paid"))
-summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
-  if (is.null(evaluation_date)){
+#' summary(ldf_data, values = c("paid_excess250", "sal_sub", "paid"))
+summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
+  if (is.null(calendar)){
     
-    # select columns to summarize at latest evaluation date
+    # select columns to summarize at latest calendar
     latest <- get_latest(df = ldf) 
-    exclude <- get_colnum(df = latest, type = c("id", "dev", "evaluation_date", "origin"))
+    exclude <- get_colnum(df = latest, type = c("id", "dev", "calendar", "origin"))
     latest_values <- latest[, -exclude]
     latest_values <- carry_attr(df1 = latest, df2 = latest_values)
     
@@ -126,9 +120,9 @@ summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
                   function(x) tapply(x, get_col(df = latest, type = "origin"), sum, na.rm = TRUE))
   } else {
     
-    # select columns to summarize at supplied evaluation date
-    selected <- ldf[get_col(df = ldf, type = "evaluation_date") == evaluation_date, 
-                    -get_colnum(df = ldf, type = c("id", "dev", "evaluation_date"))]
+    # select columns to summarize at supplied `calendar`
+    selected <- ldf[ldf$calendar == calendar, 
+                    -get_colnum(df = ldf, type = c("id", "dev", "calendar"))]
     selected <- carry_attr(df1 = ldf, df2 = selected)
     # sum columns by origin
     smry <- apply(selected[, -which(names(selected) %in% get_colname(df = selected, type = "origin"))], 2,
@@ -141,7 +135,6 @@ summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
   smry <- cbind(origin, smry)
   rownames(smry) <- NULL
   smry <- carry_attr(df1 = ldf, df2 = smry)
-  
   
   if (is.null(values)) {
     return(smry)
@@ -182,18 +175,18 @@ summary.loss_df <- function(ldf, values = NULL, evaluation_date = NULL) {
 #' @export
 #' 
 #' @examples
-#' # plot paid and case at most recent `evaluation_date`
-#' plot(losses_loss_df)
+#' # plot paid and case at most recent `calendar`
+#' plot(ldf_data)
 #' 
-#' # plot paid and case at selected `evaluation_date`
-#' plot(losses_loss_df, evaluation_date = "2012-06-30")
-#' ## need to fix so other evaluation dates besides latest work
-plot.loss_df <- function(ldf, evaluation_date = NULL) {
+#' # plot paid and case at selected `calendar`
+#' plot(ldf_data, calendar = 2013)
+#' ## need to fix so other calendar besides latest work
+plot.loss_df <- function(ldf, calendar = NULL) {
   # format data frame
-  if (is.null(evaluation_date)) {
+  if (is.null(calendar)) {
     smry <- as.data.frame(summary(ldf))
   } else {
-    smry <- as.data.frame(summary(ldf, evaluation_date = evaluation_date))
+    smry <- as.data.frame(summary(ldf, calendar = calendar))
   } 
   smry <- carry_attr(df1 = ldf, df2 = smry)
   pdata <- data.frame(get_col(df = smry, type = "origin"))
@@ -247,13 +240,13 @@ check_loss_df <- function(ldf) {
   }
   
   # chack that columns are of correct type
-  factor_cols <- get_colname(df = ldf, c("id", "evaluation_date"))
+  factor_cols <- get_colname(df = ldf, "id")
   numeric_cols <- get_colname(df = ldf, c("origin", "dev", "paid", "incurred",
                                           "paid_recovery", "incurred_recovery", "desc"))
   if (!all(unlist(lapply(ldf[, factor_cols], is.factor)))) {
-    stop("set 'id' and or 'evaluation_date' of type factor")
+    stop("set 'id' to type factor")
   }
   if (!all(unlist(lapply(ldf[, numeric_cols], is.numeric)))) {
-    stop("All columns other than 'id' and 'evaluation_date' must be of type numeric")  
+    stop("All columns other than 'id' must be of type numeric")  
   }
 }

@@ -1,4 +1,4 @@
-#' Detect all changes in a \code{\link{loss_df}} at different evaluation dates
+#' Detect all changes in a \code{\link{loss_df}} at different calendar periods
 #' 
 #' @description \code{claim_changes} is designed to make viewing all "changed claims" more simple.  
 #'  A "changed claim" is a claim in a \code{\link{loss_df}} in which one or more of the \code{values}
@@ -7,8 +7,8 @@
 #' 'eval2' it will be returned as two seperate claims)
 #' 
 #' @param ldf S3 object of class \code{\link{loss_df}}
-#' @param eval1 one of the evaluation dates to compare
-#' @param eval2 the other evaluation date.  Data at eval2 will be compared to data at eval1.
+#' @param calendar1 the more recent calendar period to compare
+#' @param calendar2 the older calendar period.  Data at calendar2 will be compared to data at calendar1.
 #' @param values a vector of the names or number of the columns to be compared for changes.  If NULL all comparable
 #' columns will be compared. If any column names are provided in \code{values} argument, the function will only
 #' compare the columns with the corresponding names.
@@ -26,45 +26,46 @@
 #' @export
 #' @examples
 #' # return all claims with changes in all comparable columns in the 'loss_df'
-#' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30")
+#' claim_changes(ldf_data, calendar1 = 2014, calendar = 2013)
 #' 
 #' # return only claims with changes in 'paid_loss_only'
-#' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30", values = "paid_loss_only")
+#' claim_changes(ldf_data, calendar1 = 2014, calendar2 = 2013, values = "paid_loss_only")
 #' 
 #' # return claims with changes in multiple 'values'
-#' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30", 
+#' claim_changes(ldf_data, calendar1 = 2014, calendar2 = 2013, 
 #'         values = c("paid_loss_only", "incurred_loss_only", "claim_cts"))
 #'         
 #' # return claims with changes in multiple 'values' using column number
-#' claim_changes(losses_ldf, eval1 = "2013-06-30", eval2 = "2012-06-30", 
+#' claim_changes(ldf_data, calendar1 = 2014, calendar2 = 2013, 
 #'         values = c(6, 8, 9))
-claim_changes <- function(ldf, eval1, eval2, values = NULL) {
+claim_changes <- function(ldf, calendar1, calendar2, values = NULL) {
   if (length(get_colnum(df = ldf, type = "id")) == 0) {
-    stop("A claim 'id' bust be supplied when constructing your 'loss_df' to use the 'claim_changes' function")
+    stop("A claim 'id' must be supplied when constructing your 'loss_df' to use the 'claim_changes' function")
   }
   
-  # idenity columns not to be compared
-  non_values <- get_colnum(df = ldf, type = c("dev", "evaluation_date"))
+  # columns to exclude
+  x_cols <- get_colnum(df = ldf, type = c("dev", "calendar"))
+  by_vars <- get_colnum(df = ldf, c("id", "origin"))
   
   # select values to be compared depending on 'values' argument
   # and create new data frame of one data frame at each of the two evaluation dates
   # merged into one data frame by 'id' and 'origin'
   if (is.null(values)) {
-    comparison <- merge_loss_df(ldf, eval1 = eval1, eval2 = eval2,
-                                by = c("id", "origin"), exclude = non_values)
+    comparison <- merge_loss_df(ldf, calendar1 = calendar1, calendar2 = calendar2,
+                                by = by_vars, exclude = x_cols)
     # may want to make this a utility function and add a check for factors so it can support non numeric comparisons
-    values <- setdiff(names(ldf), c(get_colname(df = ldf, type = c("id", "origin", "dev", "evaluation_date"))))
+    values <- setdiff(names(ldf), c(get_colname(df = ldf, type = c("id", "origin", "dev", "calendar"))))
   } else {
     values <- num_to_name(df = ldf, value = values)
-    ldf2 <- ldf[, c(get_colname(df = ldf, type = c("id", "origin", "dev", "evaluation_date")), values)]
+    ldf2 <- ldf[, c(get_colname(df = ldf, type = c("id", "origin", "dev", "calendar")), values)]
     ldf2 <- carry_attr(ldf, ldf2)
-    comparison <- merge_loss_df(ldf2, eval1 = eval1, eval2 = eval2, 
-                                by = c("id", "origin"), exclude = non_values)
+    comparison <- merge_loss_df(ldf2, calendar1 = calendar1, calendar2 = calendar2, 
+                                by = by_vars, exclude = x_cols)
   }
   # create change columned columns
   for (i in 1:length(values)) {
-    comparison[, length(comparison) + 1] <- comparison[, paste0(values[i], "_", eval1)] -
-      comparison[, paste0(values[i], "_", eval2)]
+    comparison[, length(comparison) + 1] <- comparison[, paste0(values[i], "_", calendar1)] -
+      comparison[, paste0(values[i], "_", calendar2)]
     names(comparison)[length(comparison)] <- paste0(values[i], "_change")
   }
   # find all rows containing differing values

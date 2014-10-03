@@ -58,7 +58,7 @@ net_incurred <- function(df) {
   sum_type(df = df, type = "incurred") - sum_type(df = df, type = "incurred_recovery")
 }
 
-# return all claims at latest evaluation date
+# return all claims at latest calendar date
 get_latest <- function(df) {
   calendar <- get_calendar(df = df)
   max_cal <- max(calendar)
@@ -70,33 +70,25 @@ get_latest <- function(df) {
 
 #' return calandar year for each row
 #' 
-#' useful for finding the evaluation date if one is not supplied
-#'
-#'
+#' usefu
 #'@param df a loss_df data frame
-get_calendar <- function(df, year = NULL) {
-  calendar <- get_col(df = df, type = "origin") +
-    get_col(df = df, type = "dev")
-  if (is.null(year)) {
-    return(calendar)
-  } else {
-    return(calendar[calendar == year])
-  }
+get_calendar <- function(df) {
+  calendar <- get_col(df = df, type = "origin") + get_col(df = df, type = "dev")
 }
 
 #' merge wrapper for data frame using 'type' attribute
 #'
 #' @param df
-#' @param eval1
-#' @param eval2
+#' @param calendar1
+#' @param calendar2
 #' @param by vector of column names to merge by
 #' @param columns to be excluded from the merge
 #' 
-merge_loss_df <- function(df, eval1, eval2, by, exclude) {
-  group1 <- df[get_col(df = df, type = "evaluation_date") == eval1, -exclude]
-  group2 <- df[get_col(df = df, type = "evaluation_date") == eval2, -exclude]
+merge_loss_df <- function(df, calendar1, calendar2, by, exclude) {
+  group1 <- df[get_col(df = df, type = "calendar") == calendar1, -exclude]
+  group2 <- df[get_col(df = df, type = "calendar") == calendar2, -exclude]
   comparison <- merge(group1, group2, by = get_colname(df = df, type = by),
-                      all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", eval1), paste0("_", eval2)))
+                      all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", calendar1), paste0("_", calendar2)))
   comparison[is.na(comparison)] <- 0
   comparison
 }

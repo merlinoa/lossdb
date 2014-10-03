@@ -3,14 +3,14 @@
 \alias{merge_loss_df}
 \title{merge wrapper for data frame using 'type' attribute}
 \usage{
-merge_loss_df(df, eval1, eval2, by, exclude)
+merge_loss_df(df, calendar1, calendar2, by, exclude)
 }
 \arguments{
 \item{df}{}
 
-\item{eval1}{}
+\item{calendar1}{}
 
-\item{eval2}{}
+\item{calendar2}{}
 
 \item{by}{vector of column names to merge by}
 

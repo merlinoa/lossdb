@@ -3,7 +3,7 @@
 \alias{plot.loss_df}
 \title{plot method for \code{loss_df}}
 \usage{
-\method{plot}{loss_df}(ldf, evaluation_date = NULL)
+\method{plot}{loss_df}(ldf, calendar = NULL)
 }
 \arguments{
 \item{df}{loss_df S3 object}
@@ -12,12 +12,12 @@
 barchart of loss amounts by origin year
 }
 \examples{
-# plot paid and case at most recent `evaluation_date`
-plot(losses_loss_df)
+# plot paid and case at most recent `calendar`
+plot(ldf_data)
 
-# plot paid and case at selected `evaluation_date`
-plot(losses_loss_df, evaluation_date = "2012-06-30")
-## need to fix so other evaluation dates besides latest work
+# plot paid and case at selected `calendar`
+plot(ldf_data, calendar = 2013)
+## need to fix so other calendar besides latest work
 }
 \keyword{internal}
 

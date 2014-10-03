@@ -3,27 +3,27 @@
 \alias{summary.loss_df}
 \title{returns the grouped sum of loss_df columns by origin period}
 \usage{
-\method{summary}{loss_df}(ldf, values = NULL, evaluation_date = NULL)
+\method{summary}{loss_df}(ldf, values = NULL, calendar = NULL)
 }
 \arguments{
 \item{ldf}{loss_df S3 object}
 
 \item{values}{optional - select specific values to summarize}
 
-\item{evaluation_date}{optional evaluation date}
+\item{calendar}{optional calendar period (i.e. calendar = origin + dev)}
 }
 \description{
 summary.loss_df can provides snapshot for any columns
 or `type` attributes in a `loss_df` object.
 }
 \examples{
-# without specificied `evaluation_date`
-summary(recovery_ldf)
+# without specificied `calendar`
+summary(ldf_data)
 
-# with specified `evaluation_date`
-summary(recovery_ldf, evaluation_date = "2012-06-30")
+# with specified `calendar`
+summary(ldf_data, calendar = "2012-06-30")
 
 # with specified `values`
-summary(recovery_ldf, values = c("paid_excess250", "sal_sub", "paid"))
+summary(ldf_data, values = c("paid_excess250", "sal_sub", "paid"))
 }
 

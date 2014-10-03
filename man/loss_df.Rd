@@ -3,18 +3,15 @@
 \alias{loss_df}
 \title{loss_df S3 class constructor}
 \usage{
-loss_df(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL,
-  incurred = NULL, paid_recovery = NULL, incurred_recovery = NULL,
-  desc = NULL)
+loss_df(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
+  paid_recovery = NULL, incurred_recovery = NULL, desc = NULL)
 }
 \arguments{
 \item{origin}{time period in which the claim originated}
 
-\item{dev}{development stage of claim at relevant 'evaluation_date'}
+\item{dev}{development stage of claim at relevant calendar time}
 
 \item{id}{optional identification key of claim}
-
-\item{evaluation_date}{optional column naming the evaluation dates}
 
 \item{paid}{vector listing names or numbers for all paid loss columns}
 
@@ -34,7 +31,7 @@ loss_df(ldf, origin, dev, id = NULL, evaluation_date = NULL, paid = NULL,
 package.  A \code{loss_df} is a data frame for insurance loss data.  The data frame
 is structured on a claim or occurence basis (i.e. each row represents 1 claim
 or 1 claim occurence) evaluated at a specific time, and each column contains
-certain variables attributable to the claim at that evaluation time.
+certain variables attributable to the claim at that evaluation (i.e. calendar) time.
 }
 \details{
 \code{loss_df} is designed to assign descriptive and consistent names
