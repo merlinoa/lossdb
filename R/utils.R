@@ -85,8 +85,8 @@ get_calendar <- function(df) {
 #' @param columns to be excluded from the merge
 #' 
 merge_loss_df <- function(df, calendar1, calendar2, by, exclude) {
-  group1 <- df[get_col(df = df, type = "calendar") == calendar1, -exclude]
-  group2 <- df[get_col(df = df, type = "calendar") == calendar2, -exclude]
+  group1 <- df[df$calendar == calendar1, -exclude]
+  group2 <- df[df$calendar == calendar2, -exclude]
   comparison <- merge(group1, group2, by = get_colname(df = df, type = by),
                       all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", calendar1), paste0("_", calendar2)))
   comparison[is.na(comparison)] <- 0
