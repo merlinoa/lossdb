@@ -41,7 +41,7 @@ I want to make reproducible actuarial reports in R.  Getting unclean data ready 
 
 The goal of the `lossdb` package is to provide standard functions for manipulating and visualizing loss data. `lossdb` provides a standard means of storing your claims data so you can use the same set of functions (defined by `lossdb`) to automate many repetetive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
 
-When using R one can easilty improve the flexibility of their reports by maintaining access to all the original claim detail (i.e. each report can be generated from the original claim data as opposed to a summary and a bunch of copy and pastes of the original claim data). This can be a huge time saver if you need to go back and change an origninal assumtion of your report.  Additionally generating reports from the original data reduces and provides confidence that the numbers in your report are in fact correct.  
+When using R one can easily improve the flexibility of their reports by maintaining access to all the original claim detail (i.e. each report can be generated from the original claim data as opposed to a summary and a bunch of copy and pastes of the original claim data). This can be a huge time saver if you need to go back and change an origninal assumtion of your report.  Additionally generating reports from the original data reduces errors and provides confidence that the numbers in your report are up to date.  
 
 In summary, `lossdb` provides a standard format for storing loss data and provides a set of functions specific to that standard format.  The fact that the entire report can be done in R is what makes it more easily reproducible.  `lossdb` just makes it a little easier to go from raw data to a final report in R.
 
@@ -63,18 +63,19 @@ There are many columns that are not relevant to our analysis, and some transform
 
 ### Format the data 
 
-The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in the loss df.  There are two main categories that a loss_df column can fall into: required (general information about the claim) and loss values (loss dollar amounts and claim descritions)
+The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in the loss df.  The loss_df has 2 required categories 6 optional categories.
 
-* Required: These categories provide all the necessary claim detail other than the actual loss values. A `loss_df` is required to have the following columns:
+* Required:
   * origin: numeric - the time period in which the claim originated
-  * dev: numeric - the development stage of the claim at the relevant evaluation_date
+  * dev: numeric - the development stage of the claim at the relevant calendar period
 
-* Loss Values: All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses categories separately or the sum of paid losses and paid expenses).  All loss values must fall into 1 of the following 5 categories:
+* Optional: All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses categories separately or the sum of paid losses and paid expenses).  All loss values must fall into 1 of the following 5 categories:
   * paid: paid amounts
   * incurred: incurred amounts
   * paid_recovery: paid recovery amounts
   * incurred_recovery: incurred recovery amounts
   * desc: miscellaneous descriptive amounts
+  * id: unique identifier for claim. Does not have to be numeric.
 
 Next the dplyr package is used to clean the `losses` data so it conforms to the format required to make a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
 ```{r, message = FALSE}
@@ -103,10 +104,13 @@ occurences <- mutate(occurences,
                     paid_loss = payment_amount - paid_expense,
                     incurred_loss = incurred_amount - incurred_expense,
                     paid_excess250 = max(payment_amount - sal_sub_paid - 250000, 0),
-                    incurred_excess250 = max(incurred_amount - sal_sub_incurred - 250000, 0)) 
+                    incurred_excess250 = max(incurred_amount - sal_sub_incurred - 250000, 0))
+
+# need to get rid of grouped df class. causing problems with subsetting.
+occurences <- as.data.frame(occurences)
 ```
 
-The above code does not use the `lossdb` package.  All that code did was prepare the data for use with the `lossdb` package (often a time consuming task esprecially the first time working with a fresh data set).
+The above code does not use the `lossdb` package.  All that code did was prepare the data for use with the `lossdb` package (often a time consuming task esprecially the first time working with a new data set).
 
 Now that we have all the necessary columns, we can create the `loss_df` object.
 ```{r}
@@ -137,12 +141,12 @@ summary(mydf)
 We can look at the data at an older evaluation date by specifying the `evaluation_date`
 
 ```{r}
-summary(mydf, evaluation_date = "2012")
+summary(mydf, calendar = "2012")
 ```
 
-Note: the default `evaluation_date` if none is supplied to the `loss_df` function is set to the `origin` period plus the `dev`. (e.g.) The `evaluation_date` for all claims in origin year 2010 at their first `evaluation_date` would be 2011.
+Note: the `calendar` period is the `origin` period plus the `dev`. (e.g.) The `evaluation_date` for all claims in origin year 2010 at their first `evaluation_date` would be 2011.
 
-and the build in bar chart representation of the data...
+and the built in bar chart representation of the data...
 
 ```{r}
 plot(mydf)
@@ -163,7 +167,7 @@ mychanges <- claim_changes(mydf, calendar1 = "2013", calendar2 = "2012",
 head(mychanges)
 ```
 
-`mychanges` is a data frame consisting of all the claims in which there was a change in the "paid _ loss" column from 2012-06-30 to 2013-06-30.  You can now browse through the changed claims to spot obvious problems with the new data.  For example we may want to check that there are no missing claims (i.e. no claims that were in the data at the last `evaluation_date` that are no longer in the data)
+`mychanges` is a data frame consisting of all the claims in which there was a change in the `paid_loss` column from calendar period 2013 to 2014.  You can now browse through the changed claims to spot obvious problems with the new data.  For example we may want to check that there are no missing claims (i.e. no claims that were in the data at the last `calendar` that are no longer in the data)
 
 ```{r}
 # check for missing claims
@@ -181,11 +185,12 @@ There are no missing claims or claims with a decrease in `paid_loss`.  After thi
 
 ### Create Projections
 
-Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, paid loss & ALAE net of all recoveries, medical only paid loss & ALAE gross of all recoveries, etc.).  The `retain` function specifies the values to be projected.
+Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, paid loss & ALAE net of all recoveries, medical only paid loss & ALAE gross of all recoveries, etc.).  Use the `paid()`, `incurred()`, `paid_recovery()`, and `incurred_recovery()` functions to get the total from each category.
+
 
 ```{r}
-# include recovery detail by category: `sal_sub_paid` and `paid_excess250`
-value2project <- retain(mydf, value = "paid", recovery = c("paid_excess250", "sal_sub_paid"))
+# project total paid losses gross of any recovery
+value2project <- data.frame(mydf$origin, mydf$dev, paid(mydf))
 head(value2project)
 ```
 
