@@ -62,7 +62,7 @@ loss_df <- function(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
   attr(df2, "type") <- unlist(atr)
   
   # set `calendar`
-  df2$calendar <- get_calendar(df = df2)
+  df2$calendar <- ldf[, origin] + ldf[, dev]
   attr(df2, "type")[length(attr(df2, "type")) + 1] <- "calandar"
   
   # define data.frame class as "loss.df"
