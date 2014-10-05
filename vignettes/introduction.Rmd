@@ -2,12 +2,11 @@
 output: html_document
 ---
 <!--
-%\VignetteEngine{knitr::docco_linear}
+%\VignetteEngine{knitr::knitr}
 %\VignetteIndexEntry{Introduction to lossdb}
 -->
 
 ```{r, echo = FALSE, message = FALSE}
-library(lossdb)
 knitr::opts_chunk$set(
   comment = "#>",
   tidy = FALSE)
