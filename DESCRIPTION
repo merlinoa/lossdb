@@ -17,6 +17,4 @@ Imports:
     reshape2
 VignetteBuilder: knitr
 LazyData: yes
-Suggests:
-    knitr,
-    testthat
+Suggests: knitr, testthat, rmarkdown
