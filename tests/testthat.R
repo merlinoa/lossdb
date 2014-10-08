@@ -1,4 +1,4 @@
 library(testthat)
-library(reserve)
+library(lossdb)
 
-test_check("reserve")
+test_check("lossdb")
