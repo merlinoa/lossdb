@@ -8,10 +8,6 @@ merge_loss_df(df, calendar1, calendar2, by, exclude)
 \arguments{
 \item{df}{}
 
-\item{calendar1}{}
-
-\item{calendar2}{}
-
 \item{by}{vector of column names to merge by}
 
 \item{columns}{to be excluded from the merge}

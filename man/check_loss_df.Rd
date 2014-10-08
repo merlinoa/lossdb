@@ -6,7 +6,7 @@
 check_loss_df(ldf)
 }
 \arguments{
-\item{df}{a loss_df to check}
+\item{ldf}{a loss_df to check}
 }
 \description{
 check that arguments and data columns to loss_df are appropriate

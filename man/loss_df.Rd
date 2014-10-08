@@ -7,6 +7,8 @@ loss_df(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
   paid_recovery = NULL, incurred_recovery = NULL, desc = NULL)
 }
 \arguments{
+\item{ldf}{a data frame containing the raw data of losses by claim}
+
 \item{origin}{time period in which the claim originated}
 
 \item{dev}{development stage of claim at relevant calendar time}
@@ -23,8 +25,6 @@ loss_df(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
 
 \item{desc}{vector of all additional columns relevant to the analysis. Common examples are
   'open claims', and 'reported claims' (when claims are evaluated on an occurence basis)}
-
-\item{df}{a data frame containing the raw data of losses by claim}
 }
 \description{
 \code{loss_df} is the primary S3 data class for the \code{lossdb}

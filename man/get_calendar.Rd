@@ -3,12 +3,12 @@
 \alias{get_calendar}
 \title{return calandar year for each row}
 \usage{
-get_calendar(df)
+get_calendar(ldf)
 }
 \arguments{
 \item{df}{a loss_df data frame}
 }
 \description{
-usefu
+return calandar year for each row
 }
 

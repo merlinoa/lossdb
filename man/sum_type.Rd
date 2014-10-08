@@ -3,12 +3,12 @@
 \alias{sum_type}
 \title{returns the sum of the selected loss_df type}
 \usage{
-sum_type(df, type)
+sum_type(ldf, type)
 }
 \arguments{
-\item{type}{the type to be summed up. `type` options are `paid`, `incurred`, `paid_recovery`, and `incurred_recovery`.}
-
 \item{ldf}{a data frame of class loss_df}
+
+\item{type}{the type to be summed up. `type` options are `paid`, `incurred`, `paid_recovery`, and `incurred_recovery`.}
 }
 \description{
 returns the sum of the selected loss_df type
