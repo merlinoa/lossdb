@@ -6,14 +6,12 @@
 #' @export
 #' 
 #' @examples
-#' sum_type(ldf = recovery_ldf, sum_types = "paid")
-#' sum_type(ldf = recovery_ldf, sum_types = c("paid", "incurred")
-sum_type <- function(df, type) {
-  type_cols <- get_col(df = df, type = type, drop = FALSE)
+#' sum_type(ldf = recovery_ldf, type = "paid")
+sum_type <- function(ldf, type) {
+  type_cols <- get_col(ldf, type, drop = FALSE)
   total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
 }
-
 
 #' returns a vector for total gross paid
 #' 
