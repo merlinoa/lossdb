@@ -41,13 +41,6 @@ carry_attr <- function(ldf1, ldf2) {
   ldf2
 }
 
-# returns the sum of the selected 'type' attribute
-sum_type <- function(ldf, type) {
-  type_cols <- get_col(ldf, type = type, drop = FALSE)
-  total <- apply(type_cols, 1, sum, na.rm = TRUE)
-  total
-}
-
 # return all claims at latest calendar date
 get_latest <- function(ldf) {
   calendar <- get_calendar(ldf)
