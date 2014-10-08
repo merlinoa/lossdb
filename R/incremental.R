@@ -9,6 +9,14 @@
 #' increamental(recover_ldf, value = "paid")
 cum2incr <- function(ldf, value) {
   # extract columns for transformation
-  cols <- get_col(df = ldf, type = c("id", "origin", "dev", value))
-  cols
+  incr <- get_col(df = ldf, type = c("id", "dev", value))
+  
+  incr <- dcast(, claim.number.2 ~ dev, value.var = value)
+
+
+  # identify oldest calendar period
+  # incremental not to be calculated if a record of the origin period has not been maintained
+  # since the origin period.
+  min(ldf$calendar)
+
 }
