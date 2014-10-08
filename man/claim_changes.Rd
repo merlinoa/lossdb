@@ -10,24 +10,24 @@ claim_changes(ldf, calendar1, calendar2, values = NULL)
 
 \item{calendar1}{the more recent calendar period to compare}
 
-\item{calendar2}{the older calendar period.  Data at calendar2 will be compared to data at calendar1.}
+\item{calendar2}{the older calendar period.  Data at calendar2 will be subtracted from data at calendar1.}
 
-\item{values}{a vector of the names or number of the columns to be compared for changes.  If NULL all comparable
+\item{values}{a vector of the names of the columns to be compared for changes.  If NULL all comparable
 columns will be compared. If any column names are provided in \code{values} argument, the function will only
 compare the columns with the corresponding names.}
 }
 \description{
-\code{claim_changes} is designed to make viewing all "changed claims" more simple.
- A "changed claim" is a claim in a \code{\link{loss_df}} in which one or more of the \code{values}
- has changed from one selected calendar periods to another. A changed claim must have
- a unique 'id' for it's 'origin'.  (i.e. if a claim differs origin year from 'calendar1' to
-'calendar2' it will be returned as two seperate claims)
+\code{claim_changes} is designed to make create a dataframe for all values that have
+changed from one calendar date to another.  A "changed claim" is a claim in a \code{\link{loss_df}}
+in which one or more of the \code{values} has changed from one selected calendar periods to another.
+A changed claim must have a unique 'id' for it's 'origin'.  (i.e. if a claim differs origin year
+from 'calendar1' to calendar2' it will be returned as two seperate claims)
 }
 \details{
 The motivation for \code{claim_changes} arose from the need to confirm that new claim data
 added to the database is consistent with the claim data already in the database.  \code{claim_changes} produces a
 data frame consisting only of claims with changes in the selected \code{values} argument during the
-period between the calendar period of interest. By scanning over all the claims that have changes one can quickly
+period between the calendar periods of interest. By scanning over all the claims that have changes one can quickly
 detect errors in the data (i.e. missing claims, an unexplainable decrease in paid losses, etc.).
 Additionally it is often beneficial when reserving to have claim detail to support the changes
 that occured, summarized on an origin level basis, from one reserve report to the next.  A review
@@ -36,17 +36,13 @@ how the losses may develop.
 }
 \examples{
 # return all claims with changes in all comparable columns in the 'loss_df'
-claim_changes(ldf_data, calendar1 = 2014, calendar = 2013)
+claim_changes(ldf_data, calendar1 = 2013, calendar2 = 2012)
 
 # return only claims with changes in 'paid_loss_only'
-claim_changes(ldf_data, calendar1 = 2014, calendar2 = 2013, values = "paid_loss_only")
+claim_changes(ldf_data, calendar1 = 2013, calendar2 = 2012, values = "paid_loss_only")
 
 # return claims with changes in multiple 'values'
-claim_changes(ldf_data, calendar1 = 2014, calendar2 = 2013,
+claim_changes(ldf_data, calendar1 = 2013, calendar2 = 2012,
         values = c("paid_loss_only", "incurred_loss_only", "claim_cts"))
-
-# return claims with changes in multiple 'values' using column number
-claim_changes(ldf_data, calendar1 = 2014, calendar2 = 2013,
-        values = c(6, 8, 9))
 }
 
