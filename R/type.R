@@ -7,7 +7,7 @@
 #' 
 #' @examples
 #' sum_type(ldf = recovery_ldf, type = "paid")
-sum_type <- function(ldf, type) {
+sum_type <- function(ldf, type) {  
   type_cols <- get_col(ldf, type, drop = FALSE)
   total <- apply(type_cols, 1, sum, na.rm = TRUE)
   total
@@ -59,4 +59,19 @@ paid_recovery <- function(ldf) {
 #' incurred_recovery(recovery_ldf)
 incurred_recovery <- function(ldf) {
   sum_type(ldf, type = "incurred_recovery")
+}
+
+#' Totals the type attribues `paid`, `incurred`, `paid_recovery`, `incurred_recovery`
+#'
+#' @param ldf object of type loss_df
+#' 
+#' @examples
+#' full_ldf(ldf_data)
+type_totals <- function(ldf) {
+  # summarize `type` by adding columns of same type together
+  type <- intersect(attr(ldf, "type"), types$all)
+  
+  totals <- sapply(type, function(x) sum_type(ldf, type = x))
+  
+  totals
 }

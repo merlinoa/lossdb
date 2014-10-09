@@ -14,7 +14,6 @@ sum_type(ldf, type)
 returns the sum of the selected loss_df type
 }
 \examples{
-sum_type(ldf = recovery_ldf, sum_types = "paid")
-sum_type(ldf = recovery_ldf, sum_types = c("paid", "incurred")
+sum_type(ldf = recovery_ldf, type = "paid")
 }
 
