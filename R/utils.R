@@ -11,6 +11,20 @@ num_to_name <- function(ldf, value) {
   value
 }
 
+# return columns for column names or by column type attribute
+select_value <- function(ldf, type_value) {
+  type <- intersect(type_value, types$all)
+  if (length(type) > 0) {
+    totals <- sapply(type, function(x) sum_type(ldf, type = x))
+  }
+  
+  out <- ldf[, intersect(names(ldf), type_value), drop = FALSE]
+  if (exists("totals")) {
+   return(data.frame(out, totals))
+  }
+  data.frame(out)
+}
+
 # return columns with a certain 'type' attribute
 # add functionality for negative type
 get_col <- function(ldf, type, drop = TRUE) {
