@@ -68,6 +68,9 @@ loss_df <- function(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
   # define data.frame class as "loss.df"
   class(df2) <- c("loss_df", "data.frame")
   
+  # change names for type `id` `origin`, and `dev` to `id`, `origin`, and `dev`
+  names(df2)[get_colnum(df2, c("origin", "dev", "id"))] <- c("origin", "dev", "id")
+  
   # run automated check
   check_loss_df(df2)
   
@@ -109,54 +112,34 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' # with specified `values`
 #' summary(ldf_data, values = c("paid_excess250", "sal_sub", "paid"))
 summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
+  ## make sure only types$detail
+  if (length(intersect(values, types$meta)) > 0) stop("meta values not be comparable")
   
-  # determine calendar period to summarize
+  # filter rows of calendar period to summarize
   if (is.null(calendar)){
-    selected <- get_latest(ldf)     
+    selected_rows <- get_latest(ldf)     
   } else {
-    selected <- ldf[ldf$calendar == calendar, ]
+    selected_rows <- ldf[ldf$calendar == calendar, ]
   }
   
-  exclude <- get_colnum(selected, type = c("id", "dev", "calendar", "origin"))
-  selected_values <- selected[, -exclude]
-  selected_values <- carry_attr(ldf, ldf2 = selected_values)
+  # select columns to summarize
+  if (is.null(values)) {
+    selected <- selected_rows[, setdiff(names(selected_rows), types$meta)]
+  } else {
+    selected <- ldf_select(selected_rows, values)
+  }
   
-  # sum columns based on by argument
-  smry <- apply(selected_values, 2,
-                function(x) tapply(x, get_col(selected, type = "origin"), 
-                                   sum, na.rm = TRUE))
+  # sum columns based on origin
+  smry <- apply(selected, 2,
+                function(x) tapply(x, selected_rows$origin, sum, na.rm = TRUE))
   
-  # move by column from rowname into actual data frame
-  by_row <- data.frame(rownames(smry))
-  names(by_row) <- get_colname(ldf, type = "origin")
-  smry <- cbind(by_row, smry)
+  # move origin column rowname into column in actual data frame
+  origin <- data.frame(origin = rownames(smry))
+  smry <- cbind(origin, smry)
   rownames(smry) <- NULL
   smry <- carry_attr(ldf, ldf2 = smry)
   
-  if (is.null(values)) {
-    return(smry)
-  } else {   
-    
-    # select origin column
-    smry2 <- get_col(smry, type = "origin", drop = FALSE)
-    
-    # summarize by origin columns of same type together
-    for (i in intersect(values, types$all)) {
-      smry2[, i] <- sum_type(smry, type = i)
-    }
-    
-    # return specific columns based on supplied column name
-    for (j in intersect(values, names(smry))) {
-      smry2[, j] <- smry[, j, drop = FALSE]
-    }
-    
-    # reorder columns so they are in same order as `values` argument
-    index <- match(values, names(smry2[, 2:length(smry2), drop = FALSE]))
-    index <- index + 1
-    smry2 <- data.frame(smry2[1], smry2[index])
-    smry2 <- carry_attr(smry, ldf2 = smry2)
-    smry2
-  }
+  smry
 }
 
 
@@ -221,25 +204,30 @@ plot.loss_df <- function(ldf, calendar = NULL) {
 #' 
 #' @param ldf a loss_df to check
 check_loss_df <- function(ldf) {
-  # check that required cols (id, origin and dev) each exist
+  # chack that reserved names are not used
+  if (length(intersect(unlist(types$detail$dollar), names(ldf))) > 0) {
+    stop("paid, incurred, paid_recovery, and incurred_recovery are reserved names.  Change column names.")
+  }
+  
+  # check that required cols (origin and dev) each exist
   if (!identical(intersect(c("origin", "dev"), attr(ldf, "type")),
                 c("origin", "dev"))) {
     stop("'origin' and 'dev' are required arguments")
   }
+  
   # check that 'origin' and 'dev' are each only 1 column
   if (length(get_colname(ldf, c("origin", "dev"))) != 2) {
     stop("'origin' and 'dev' can only reference 1 column each")
   }
+  
   # check to see that at least 1 column of loss data was supplied
-  if (length(get_colname(ldf, c("paid", "incurred", "paid_recovery",
-                                      "incurred_recovery", "desc"))) < 1) {
+  if (length(get_colname(ldf, c(types$dollar, "desc"))) < 1) {
     stop("At least 1 column of loss data must be provided")
   }
   
   # chack that columns are of correct type
   factor_cols <- get_colname(ldf, "id")
-  numeric_cols <- get_colname(ldf, c("origin", "dev", "paid", "incurred",
-                                          "paid_recovery", "incurred_recovery", "desc"))
+  numeric_cols <- get_colname(ldf, c("origin", "dev", "desc", types$dollar))
   if (!all(unlist(lapply(ldf[, factor_cols], is.factor)))) {
     stop("set 'id' to type factor")
   }
