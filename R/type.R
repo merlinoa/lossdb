@@ -69,7 +69,7 @@ incurred_recovery <- function(ldf) {
 #' full_ldf(ldf_data)
 type_totals <- function(ldf) {
   # summarize `type` by adding columns of same type together
-  type <- intersect(attr(ldf, "type"), types$all)
+  type <- intersect(attr(ldf, "type"), types$dollar)
   
   totals <- sapply(type, function(x) sum_type(ldf, type = x))
   
