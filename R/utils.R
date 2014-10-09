@@ -1,7 +1,10 @@
 # store types
-types <- list(values = c("paid", "incurred"),
+types <- list(meta = c("origin", "dev", "id", "calendar", "desc"),
+              loss = c("paid", "incurred"),
               recovery = c("paid_recovery", "incurred_recovery"),
-              all = c("paid", "incurred", "paid_recovery", "incurred_recovery"))
+              dollar = c("paid", "incurred", "paid_recovery", "incurred_recovery"),
+              all = c("origin", "dev", "id", "calendar", "desc", 
+                      "paid", "incurred", "paid_recovery", "incurred_recovery"))
 
 # convert positions to names
 num_to_name <- function(ldf, value) {
@@ -12,17 +15,33 @@ num_to_name <- function(ldf, value) {
 }
 
 # return columns for column names or by column type attribute
-select_value <- function(ldf, type_value) {
-  type <- intersect(type_value, types$all)
-  if (length(type) > 0) {
-    totals <- sapply(type, function(x) sum_type(ldf, type = x))
+# can return multiple columns
+ldf_select <- function(ldf, values) {
+  # return summed type for dollar types
+  dollar_types <- intersect(values, types$dollar)
+  if (length(dollar_types) > 0) {
+    totals <- sapply(dollar_types, function(x) sum_type(ldf, type = x))
+  }
+  # return columns for other types supplied in values argument
+  meta_types <- intersect(values, types$meta)
+  if (length(meta_types) > 0) {
+    metas <- sapply(meta_types, function(x) get_col(ldf, type = x))
+  }
+  # note: Need to not use sapply as it can be inconsistent
+  
+  col_names <- setdiff(intersect(names(ldf), values), types$all)
+  out <- ldf[, col_names, drop = FALSE]
+  
+  if (exists("totals")) {
+    out <- data.frame(out, totals)
+  }
+  if (exists("metas")) {
+    out <- data.frame(out, metas) 
   }
   
-  out <- ldf[, intersect(names(ldf), type_value), drop = FALSE]
-  if (exists("totals")) {
-   return(data.frame(out, totals))
-  }
-  data.frame(out)
+  out <- carry_attr(ldf, ldf2 = out)
+
+  out
 }
 
 # return columns with a certain 'type' attribute
@@ -30,7 +49,6 @@ select_value <- function(ldf, type_value) {
 get_col <- function(ldf, type, drop = TRUE) {
   ldf[, get_colnum(ldf, type), drop]
 }
-
 
 # return column names that have a certain 'type' attribute
 get_colname <- function(ldf, type) {
@@ -54,6 +72,11 @@ carry_attr <- function(ldf1, ldf2) {
   attr(ldf2, "type") <- attr(ldf1, "type")[type_index]
   ldf2
 }
+
+
+
+
+
 
 # return all claims at latest calendar date
 get_latest <- function(ldf) {
