@@ -4,6 +4,8 @@
 \title{merge wrapper for data frame using 'type' attribute}
 \usage{
 merge_loss_df(df, calendar1, calendar2, by, exclude)
+
+merge_loss_df(df, calendar1, calendar2, by, exclude)
 }
 \arguments{
 \item{df}{}
@@ -11,8 +13,16 @@ merge_loss_df(df, calendar1, calendar2, by, exclude)
 \item{by}{vector of column names to merge by}
 
 \item{columns}{to be excluded from the merge}
+
+\item{df}{}
+
+\item{by}{vector of column names to merge by}
+
+\item{columns}{to be excluded from the merge}
 }
 \description{
+merge wrapper for data frame using 'type' attribute
+
 merge wrapper for data frame using 'type' attribute
 }
 

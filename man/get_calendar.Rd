@@ -4,11 +4,17 @@
 \title{return calandar year for each row}
 \usage{
 get_calendar(ldf)
+
+get_calendar(ldf)
 }
 \arguments{
 \item{df}{a loss_df data frame}
+
+\item{df}{a loss_df data frame}
 }
 \description{
+return calandar year for each row
+
 return calandar year for each row
 }
 
