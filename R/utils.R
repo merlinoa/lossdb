@@ -1,35 +1,41 @@
 # store types
-types <- list(meta = c("origin", "dev", "id", "calendar", "desc"),
-              loss = c("paid", "incurred"),
-              recovery = c("paid_recovery", "incurred_recovery"),
-              dollar = c("paid", "incurred", "paid_recovery", "incurred_recovery"),
-              all = c("origin", "dev", "id", "calendar", "desc", 
-                      "paid", "incurred", "paid_recovery", "incurred_recovery"))
-
-# convert positions to names
-num_to_name <- function(ldf, value) {
-  if (!missing(value) && is.numeric(value)) {
-    value <- names(ldf)[value]
+types <- list(meta = c("origin", "dev", "id", "calendar"),
+              detail = list(
+                dollar = list(
+                  loss = c("paid", "incurred"), 
+                  recovery = c("paid_recovery", "incurred_recovery")),
+                "desc")
+              )
+        
+# convert column numbers to column names
+num_to_name <- function(ldf, col_num) {
+  if (!missing(col_num) && is.numeric(col_num)) {
+    col_name <- names(ldf)[col_num]
+  } else {
+    col_name <- col_num
   }
-  value
+  col_name
 }
 
 # return columns for column names or by column type attribute
 # can return multiple columns
+# ldf_select(ldf_data, c("origin", "dev", "paid"))
+# ldf_select(ldf_data, c("paid_excess250", "sal_sub", "paid"))
 ldf_select <- function(ldf, values) {
   # return summed type for dollar types
-  dollar_types <- intersect(values, types$dollar)
+  dollar_types <- intersect(values, unlist(types$detail$dollar))
   if (length(dollar_types) > 0) {
     totals <- sapply(dollar_types, function(x) sum_type(ldf, type = x))
   }
-  # return columns for other types supplied in values argument
-  meta_types <- intersect(values, types$meta)
-  if (length(meta_types) > 0) {
-    metas <- sapply(meta_types, function(x) get_col(ldf, type = x))
-  }
-  # note: Need to not use sapply as it can be inconsistent
+  # note: Probably need to find replacement for sapply as it can be inconsistent
   
-  col_names <- setdiff(intersect(names(ldf), values), types$all)
+  # return columns for meta and desc types supplied in values argument
+  meta_types <- intersect(values, unlist(c(types$meta, types$detail[[2]])))
+  if (length(meta_types) > 0) {
+    metas <- get_col(ldf, type = meta_types, drop = FALSE)
+  }
+  
+  col_names <- setdiff(intersect(names(ldf), values), unlist(types))
   out <- ldf[, col_names, drop = FALSE]
   
   if (exists("totals")) {
@@ -39,13 +45,15 @@ ldf_select <- function(ldf, values) {
     out <- data.frame(out, metas) 
   }
   
+  # order columns as supplied in values argument
+  out <- out[, match(values, names(out))]
+  
   out <- carry_attr(ldf, ldf2 = out)
-
+  
   out
 }
 
 # return columns with a certain 'type' attribute
-# add functionality for negative type
 get_col <- function(ldf, type, drop = TRUE) {
   ldf[, get_colnum(ldf, type), drop]
 }
@@ -72,9 +80,6 @@ carry_attr <- function(ldf1, ldf2) {
   attr(ldf2, "type") <- attr(ldf1, "type")[type_index]
   ldf2
 }
-
-
-
 
 
 
