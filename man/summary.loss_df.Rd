@@ -11,6 +11,9 @@
 \item{values}{optional - select specific values to summarize}
 
 \item{calendar}{optional calendar period (i.e. calendar = origin + dev)}
+
+\item{by}{type attribute to summarize by.  Allowable values are `origin`, `dev`,
+and `id`}
 }
 \description{
 summary.loss_df can provides snapshot for any columns
@@ -21,7 +24,7 @@ or `type` attributes in a `loss_df` object.
 summary(ldf_data)
 
 # with specified `calendar`
-summary(ldf_data, calendar = "2012-06-30")
+summary(ldf_data, calendar = 2012)
 
 # with specified `values`
 summary(ldf_data, values = c("paid_excess250", "sal_sub", "paid"))

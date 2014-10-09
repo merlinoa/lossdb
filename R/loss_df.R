@@ -87,6 +87,8 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' returns the grouped sum of loss_df columns by origin period
 #' 
 #' @param ldf loss_df S3 object
+#' @param by type attribute to summarize by.  Allowable values are `origin`, `dev`,
+#' and `id`
 #' @param values optional - select specific values to summarize
 #' @param calendar optional calendar period (i.e. calendar = origin + dev)
 #' 
@@ -102,37 +104,32 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' summary(ldf_data)
 #' 
 #' # with specified `calendar`
-#' summary(ldf_data, calendar = "2012-06-30")
+#' summary(ldf_data, calendar = 2012)
 #' 
 #' # with specified `values`
 #' summary(ldf_data, values = c("paid_excess250", "sal_sub", "paid"))
 summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
+  
+  # determine calendar period to summarize
   if (is.null(calendar)){
-    
-    # select columns to summarize at latest calendar
-    latest <- get_latest(ldf) 
-    exclude <- get_colnum(latest, type = c("id", "dev", "calendar", "origin"))
-    latest_values <- latest[, -exclude]
-    latest_values <- carry_attr(ldf1 = latest, ldf2 = latest_values)
-    
-    # sum columns by origin
-    smry <- apply(latest_values, 2,
-                  function(x) tapply(x, get_col(latest, type = "origin"), sum, na.rm = TRUE))
+    selected <- get_latest(ldf)     
   } else {
-    
-    # select columns to summarize at supplied `calendar`
-    selected <- ldf[ldf$calendar == calendar, 
-                    -get_colnum(ldf, type = c("id", "dev", "calendar"))]
-    selected <- carry_attr(ldf1 = ldf, ldf2 = selected)
-    # sum columns by origin
-    smry <- apply(selected[, -which(names(selected) %in% get_colname(selected, type = "origin"))], 2,
-                  function(x) tapply(x, get_col(selected, type = "origin"), sum, na.rm= TRUE))
+    selected <- ldf[ldf$calendar == calendar, ]
   }
   
-  # move 'origin' column from rowname into actual data frame
-  origin <- data.frame(rownames(smry))
-  names(origin) <- get_colname(ldf, type = "origin")
-  smry <- cbind(origin, smry)
+  exclude <- get_colnum(selected, type = c("id", "dev", "calendar", "origin"))
+  selected_values <- selected[, -exclude]
+  selected_values <- carry_attr(ldf, ldf2 = selected_values)
+  
+  # sum columns based on by argument
+  smry <- apply(selected_values, 2,
+                function(x) tapply(x, get_col(selected, type = "origin"), 
+                                   sum, na.rm = TRUE))
+  
+  # move by column from rowname into actual data frame
+  by_row <- data.frame(rownames(smry))
+  names(by_row) <- get_colname(ldf, type = "origin")
+  smry <- cbind(by_row, smry)
   rownames(smry) <- NULL
   smry <- carry_attr(ldf, ldf2 = smry)
   
@@ -140,10 +137,10 @@ summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
     return(smry)
   } else {   
     
-    # select `origin` column
+    # select origin column
     smry2 <- get_col(smry, type = "origin", drop = FALSE)
     
-    # summarize `type` by adding columns of same type together
+    # summarize by origin columns of same type together
     for (i in intersect(values, types$all)) {
       smry2[, i] <- sum_type(smry, type = i)
     }
@@ -156,10 +153,10 @@ summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
     # reorder columns so they are in same order as `values` argument
     index <- match(values, names(smry2[, 2:length(smry2), drop = FALSE]))
     index <- index + 1
-    smry2 <- data.frame(smry2[, 1, drop = FALSE], smry2[index])
+    smry2 <- data.frame(smry2[1], smry2[index])
     smry2 <- carry_attr(smry, ldf2 = smry2)
-    return(smry2)
-  } 
+    smry2
+  }
 }
 
 
