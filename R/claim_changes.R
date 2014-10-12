@@ -35,25 +35,23 @@
 #' claim_changes(ldf_data, calendar1 = 2013, calendar2 = 2012, 
 #'         values = c("paid_loss_only", "incurred_loss_only", "claim_cts"))
 claim_changes <- function(ldf, calendar1, calendar2, values = NULL) {
-  if (length(get_colnum(ldf, type = "id")) == 0) {
-    stop("A claim 'id' must be supplied when constructing your 'loss_df' to use the 'claim_changes' function")
+  if (is.null(ldf$id)) {
+    stop("Your 'loss_df' must have an `id` value to use the 'claim_changes' function")
   }
   
   # columns to exclude
-  x_cols <- get_colnum(ldf, type = c("dev", "calendar"))
+  x_cols <- c("dev", "calendar")
   # columns to merge by 
-  by_cols <- get_colname(ldf, c("id", "origin"))
+  by_cols <- c("id", "origin")
   
   # select values to be compared depending on 'values' argument
   # and create new data of merged data frames by selected calendar period
   if (is.null(values)) {
     comparison <- merge_loss_df(ldf, calendar1, calendar2, by = by_cols, exclude = x_cols)
-    # may want to make this a utility function and add a check for factors so it can support non numeric comparisons
-    values <- setdiff(names(ldf), c(get_colname(ldf, type = c("id", "origin", "dev", "calendar"))))
+    values <- setdiff(names(ldf), meta)
   } else {
-    ldf2 <- ldf[, c(get_colname(ldf, type = c("id", "origin", "dev", "calendar")), values)]
-    ldf2 <- carry_attr(ldf, ldf2)
-    comparison <- merge_loss_df(ldf2, by = by_cols, exclude = x_cols)
+    ldf2 <- ldf_select(ldf, values = c(meta, values))
+    comparison <- merge_loss_df(ldf2, calendar1, calendar2, by = by_cols, exclude = x_cols)
   }
   
   # create change columns showing difference in value columns

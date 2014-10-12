@@ -38,44 +38,38 @@ loss_df <- function(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
                     paid_recovery = NULL, incurred_recovery = NULL, desc = NULL) {
   
   # create list with bin for each attribute `type`
-  values <- list(id = id,
-                 origin = origin,
-                 dev = dev,
-                 paid = paid,
-                 incurred = incurred,
-                 paid_recovery = paid_recovery,
-                 incurred_recovery = incurred_recovery,
-                 desc = desc
-                 )
+  detail <- list(dollar = list(loss = list(paid = paid, 
+                                         incurred = incurred),
+                             recovery = list(paid_recovery = paid_recovery,
+                                             incurred_recovery = incurred_recovery)
+                             ),  
+               desc = desc
+              )
   
   # select relevant columns from supplied data frame and create new data frame
-  df2 <- ldf[, unlist(values)]
-  
-  # creating vector for 'type' attribute
-  n <- unlist(lapply(values, length))
-  atr <- list()
-  for (i in 1:length(values)) {
-    atr[[i]] <- rep(names(values)[i], n[i])
+  origin <- data.frame(origin = ldf[, origin])
+  dev <- data.frame(dev = ldf[, dev])
+  if (is.null(id)) {
+    ldf2 <- data.frame(origin, dev, ldf[, unlist(detail)])
+  } else {
+    id <- data.frame(id = ldf[, id])
+    ldf2 <- data.frame(id, origin, dev, ldf[, unlist(detail)])
   }
   
   # attaching type attribute to data frame
-  attr(df2, "type") <- unlist(atr)
+  attr(ldf2, "detail") <- detail
   
   # set `calendar`
-  df2$calendar <- ldf[, origin] + ldf[, dev]
-  attr(df2, "type")[length(attr(df2, "type")) + 1] <- "calandar"
+  ldf2$calendar <- ldf2[, "origin"] + ldf2[, "dev"]
   
   # define data.frame class as "loss.df"
-  class(df2) <- c("loss_df", "data.frame")
-  
-  # change names for type `id` `origin`, and `dev` to `id`, `origin`, and `dev`
-  names(df2)[get_colnum(df2, c("origin", "dev", "id"))] <- c("origin", "dev", "id")
-  
+  class(ldf2) <- c("loss_df", "data.frame")
+
   # run automated check
-  check_loss_df(df2)
+  #check_loss_df(ldf2)
   
   # return 'loss_df' object
-  df2
+  ldf2
 }
 
 
@@ -109,24 +103,24 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' # with specified `calendar`
 #' summary(ldf_data, calendar = 2012)
 #' 
-#' # with specified `values`
-#' summary(ldf_data, values = c("paid_excess250", "sal_sub", "paid"))
-summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
-  ## make sure only types$detail
-  if (length(intersect(values, types$meta)) > 0) stop("meta values not be comparable")
+#' # with specified `detail`
+#' summary(ldf_data, detail = c("paid_excess250", "sal_sub", "paid"))
+summary.loss_df <- function(ldf, detail = NULL, calendar = NULL) {
+  ## make sure only no meta values being passed to `detail` arguement
+  if (length(intersect(detail, meta)) > 0) stop("meta values not be comparable")
   
   # filter rows of calendar period to summarize
-  if (is.null(calendar)){
-    selected_rows <- get_latest(ldf)     
+  if (is.null(calendar)) {
+    selected_rows <- ldf[ldf$calendar == max(ldf$calendar), ]     
   } else {
     selected_rows <- ldf[ldf$calendar == calendar, ]
   }
   
   # select columns to summarize
-  if (is.null(values)) {
-    selected <- selected_rows[, setdiff(names(selected_rows), types$meta)]
+  if (is.null(detail)) {
+    selected <- selected_rows[, setdiff(names(selected_rows), meta)]
   } else {
-    selected <- ldf_select(selected_rows, values)
+    selected <- ldf_select(selected_rows, values = detail)
   }
   
   # sum columns based on origin
@@ -137,7 +131,6 @@ summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
   origin <- data.frame(origin = rownames(smry))
   smry <- cbind(origin, smry)
   rownames(smry) <- NULL
-  smry <- carry_attr(ldf, ldf2 = smry)
   
   smry
 }
@@ -159,25 +152,24 @@ summary.loss_df <- function(ldf, values = NULL, calendar = NULL) {
 #' plot(ldf_data)
 #' 
 #' # plot paid and case at selected `calendar`
-#' plot(ldf_data, calendar = 2013)
-#' ## need to fix so other calendar besides latest work
+#' plot(ldf_data, calendar = 2012)
 plot.loss_df <- function(ldf, calendar = NULL) {
   # format data frame
   if (is.null(calendar)) {
-    smry <- as.data.frame(summary(ldf))
+    smry <- summary(ldf, detail = unlist(detail$dollar))
   } else {
-    smry <- as.data.frame(summary(ldf, calendar))
+    smry <- summary(ldf, detail = unlist(detail$dollar),
+                    calendar = calendar)
   } 
-  smry <- carry_attr(ldf, ldf2 = smry)
-  pdata <- data.frame(get_col(smry, type = "origin"))
-  smry$incurred <- sum_type(smry, type = "incurred")
-  smry$incurred_recovery <- -sum_type(smry, type = "incurred_recovery")
-  pdata$paid_recovery <- -sum_type(smry, type = "paid_recovery")
-  pdata$case_recovery <- smry$incurred_recovery - pdata$paid_recovery
-  pdata$paid <- sum_type(smry, type = "paid")
-  pdata$case <- smry$incurred - pdata$paid
+
+  smry$case <- smry$incurred - smry$paid
   
-  totals <- melt(pdata, id.vars = 1)
+  smry$paid_recovery <- -smry$paid_recovery
+  smry$incurred_recovery <- -smry$incurred_recovery
+  smry$case_recovery <- smry$incurred_recovery - smry$paid_recovery
+
+  totals <- melt(smry[, c("origin", "paid", "case", 
+                          "paid_recovery", "case_recovery")], id.vars = "origin")
   
   # separate data frames for positive or negative value
   # this is necessary to create stacked ggplot bar chart with 
@@ -185,14 +177,11 @@ plot.loss_df <- function(ldf, calendar = NULL) {
   pos <- subset(totals, value > 0)
   neg <- subset(totals, value < 0)
   
-  attr(pos, "type")[1] <- "origin"
-  attr(neg, "type")[1] <- "origin"
-  
   # create plot
   p <- ggplot() +
-    geom_bar(data = pos, aes_string(x = get_colname(pos, type = "origin"), y = "value", fill = "variable"),
+    geom_bar(data = pos, aes(x = origin, y = value, fill = variable),
              stat = "identity") +
-    geom_bar(data = neg, aes_string(x = get_colname(neg, type = "origin"), y = "value", fill = "variable"),
+    geom_bar(data = neg, aes(x = origin, y = value, fill = variable),
              stat = "identity") +
     xlab("Origin Year") + ylab("Loss Amounts") + 
     ggtitle("Loss Amounts by Origin Year")
@@ -204,30 +193,30 @@ plot.loss_df <- function(ldf, calendar = NULL) {
 #' 
 #' @param ldf a loss_df to check
 check_loss_df <- function(ldf) {
-  # chack that reserved names are not used
-  if (length(intersect(unlist(types$detail$dollar), names(ldf))) > 0) {
+  # check that reserved names are not used
+  if (length(intersect(unlist(detail$dollar), names(ldf))) > 0) {
     stop("paid, incurred, paid_recovery, and incurred_recovery are reserved names.  Change column names.")
   }
   
   # check that required cols (origin and dev) each exist
-  if (!identical(intersect(c("origin", "dev"), attr(ldf, "type")),
-                c("origin", "dev"))) {
+  if (!identical(intersect(c("origin", "dev"), names(ldf)))) {
     stop("'origin' and 'dev' are required arguments")
   }
   
   # check that 'origin' and 'dev' are each only 1 column
-  if (length(get_colname(ldf, c("origin", "dev"))) != 2) {
+  if (length(ldf[, c("origin", "dev")]) != 2) {
     stop("'origin' and 'dev' can only reference 1 column each")
   }
   
   # check to see that at least 1 column of loss data was supplied
-  if (length(get_colname(ldf, c(types$dollar, "desc"))) < 1) {
+  if (length(unlist(detail) < 1)) {
     stop("At least 1 column of loss data must be provided")
   }
   
-  # chack that columns are of correct type
-  factor_cols <- get_colname(ldf, "id")
-  numeric_cols <- get_colname(ldf, c("origin", "dev", "desc", types$dollar))
+  # check that columns are of correct type
+  if (!is.null(ldf$id)) factor_cols <- ldf$id
+  
+  numeric_cols <- ldf[, setdiff(names(ldf), "id")]
   if (!all(unlist(lapply(ldf[, factor_cols], is.factor)))) {
     stop("set 'id' to type factor")
   }
