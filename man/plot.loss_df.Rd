@@ -16,8 +16,7 @@ barchart of loss amounts by origin year
 plot(ldf_data)
 
 # plot paid and case at selected `calendar`
-plot(ldf_data, calendar = 2013)
-## need to fix so other calendar besides latest work
+plot(ldf_data, calendar = 2012)
 }
 \keyword{internal}
 
