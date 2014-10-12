@@ -84,3 +84,6 @@ mychanges[, mychanges$paid_loss_changes < 0]
 value2project <- data.frame(mydf$origin, mydf$dev, paid(mydf))
 head(value2project)
 
+## ------------------------------------------------------------------------
+library(ChainLadder)
+

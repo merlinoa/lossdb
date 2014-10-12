@@ -24,23 +24,9 @@ The goal of this document is to introduce the basic tools `lossdb` provides, and
 
 The largest and most important data sets actuaries commonly work with are data sets describing the value and nature of insurance losses.  These data sets are often provided on a "by claim" basis (i.e. each row represents a claim and each column a variable).  These "by claim" data data sets, which I will call "loss data", are provided in a different format by every company, and often times many different formats by the same company.  A thorough combing of the loss data is often necessary to determine what each column is communicating and what columns are relevant to the analysis.  Additionally there are almost always errors that need to be addressed.  Understanding the underlying structure of the columns and ways to identify common errors can significantly improve the overall analysis process.
 
-Loss data will often have many columns representing different dollar amounts.  I refer to the columns representing dollar amounts as the "value"
-columns.  All the information contained in the value columns can be categorized into 4 different groups without loosing any information.  Each of these 4 groups can contain as many columns as neccessary to contain a full description of the data.  The 4 groups containing all the information in the value columns are:
-
-* paid - actual amounts already paid
-* incurred - amounts incurred (i.e. total amount expected to be paid by the insurance company before the claim is closed)
-* paid_recovery - actual paid reimbursements (e.g. amount under deductible)
-* incurred_recovery - incurred reimbursements
-
-Note:  A case reserve amount could be used in place of incurred.  Either one would work.
-
-All the other columns included in loss data provide some type of description of the claim (e.g. claimant name, whether the claim is open or closed, etc.).  I refer to all of these columns as "description" columns.  There can be any number of description columns.
-
-`lossdb` is designed to utilize the fundamental underlayings of loss data to make loss data easier to work with. 
-
 ## Motivation
 
-I want to make reproducible actuarial reports in R.  Getting unclean data ready for analysis is a pain in the ass, and once the data is clean it is nice to have it in some kind of a standard format so you can do similar things to data whenever you get it into that format... enter `lossdb`
+I want to make reproducible actuarial reports in R.  Getting unclean data ready for analysis is a pain, and once the data is clean it is nice to have it in some kind of a standard format so you can do similar things to data whenever you get it into that format... enter `lossdb`
 
 The goal of the `lossdb` package is to provide standard functions for manipulating and visualizing loss data. `lossdb` provides a standard means of storing your claims data so you can use the same set of functions (defined by `lossdb`) to automate many repetetive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
 
@@ -48,13 +34,47 @@ When using R one can easily improve the flexibility of their reports by maintain
 
 In summary, `lossdb` provides a standard format for storing loss data and provides a set of functions specific to that standard format.  The fact that the entire report can be done in R is what makes it more easily reproducible.  `lossdb` just makes it a little easier to go from raw data to a final report in R.
 
+## Philosophy
+
+Loss data will often have many columns representing different dollar amounts.  I refer to the columns representing dollar amounts as the "dollar" columns.  `lossdb` assumes that all the information contained in the dollar columns can be categorized into 4 different groups without losing any information.  Each of these 4 groups can contain as many columns as neccessary to contain a full description of the data.  The 4 groups containing all the information in the dollar columns are:
+
+* paid - actual amounts already paid
+* incurred - amounts incurred (i.e. total paid + reserve expected to be paid by the insurance company before the claim is closed)
+* paid_recovery - actual paid reimbursements (e.g. amount under deductible)
+* incurred_recovery - incurred reimbursements
+
+Other columns included in loss data provide some type of description of the claim (e.g. claimant name, whether the claim is open or closed, etc.).  I refer to all of these columns as "desc" (short for description) columns.  The `lossdb` package can handle any number of description columns.
+
+Additionally there are 3 columns of particular importance to actuarial analysis.  I refer to these columns as the "meta" columns and they are defined as follows:
+
+* origin - the accident period or policy period in which the claim/occurence originated
+* dev - the development stage of the claim
+* id - a unique identifier for the claim by dev
+
+By categorizing the loss data as described above `lossdb` is able to automate many of the aspects of actuarial analysis.
+
+In summary `lossdb` allows for all the variables descibing loss data to fall into one of the slots in this tree:
+
+* meta
+    + id - optional - factor - single column
+    + dev - required - numeric - single column
+    + origin - required - numeric - single column
+* detail
+    + dollar
+        + paid - optional - numeric - supports multiple columns
+        + incurred - optional - numeric - supports multiple columns
+        + paid_recovery - optional - numeric - supports multiple columns
+        + incurred_recovery - optional - numeric - supports multiple columns
+    + desc - optional - numeric - supports multiple columns
+
 ## Getting Started
 
 The standard format `lossdb` uses to store claim loss data is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and cetegorizes loss information on a claim or occurence basis, and is flexible enough to handle data that is categorized and organized differently from company to company. 
 
 The rest of this vignette will guide you through an example using `lossdb`.  The example will proceed as follows:
-* Taking a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transforming that data set into a `loss_df` object that contains and organizes all the information relevant to the analysis.
-* Reviewing the `loss_df` for errors and probelm areas.
+
+* Take a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transforming that data set into a `loss_df` object that contains and organizes all the information relevant to the analysis.
+* Reviewing the `loss_df` for errors and potential problem areas.
 * Performing statistical reserving techniques on the `loss_df`.
 * Create a PDF document of the results complete with graphics, tables, and text.
 
@@ -62,25 +82,14 @@ View the structure of the uncleaned `losses` data frame using the `str` function
 ```{r, eval = FALSE}
 str(losses)
 ```
+
 There are many columns that are not relevant to our analysis, and some transformations must be applied to the data to get all the necessary information out of the losses data frame.  Let's get started.
 
 ### Format the data 
 
-The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in the loss df.  The loss_df has 2 required categories 6 optional categories.
+The `loss_df()` function takes the uncleaned data frame as its first formal argument.  All additional arguments are used to categorize the columns in the loss df.  First we need to apply some transformations to get it into the proper format for `lossdb`
 
-Required:
-  * origin: numeric - the time period in which the claim originated
-  * dev: numeric - the development stage of the claim at the relevant calendar period
-
-Optional: All loss values must be numeric. Each category can contain as many columns as necessary, but avoid double counting (i.e. do not have one category for paid losses, one for paid expenses, and one for total paid losses and expenses.  Just supply the paid losses and paid expenses categories separately or the sum of paid losses and paid expenses).  All loss values must fall into 1 of the following 5 categories:
-  * paid: paid amounts
-  * incurred: incurred amounts
-  * paid_recovery: paid recovery amounts
-  * incurred_recovery: incurred recovery amounts
-  * desc: miscellaneous descriptive amounts
-  * id: unique identifier for claim. Does not have to be numeric.
-
-Next the dplyr package is used to clean the `losses` data so it conforms to the format required to make a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
+We use the dplyr package to clean the `losses` data so it conforms to the format required to make a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
 ```{r, message = FALSE}
 library(dplyr)
 # create origin and dev column
@@ -131,23 +140,23 @@ mydf <- loss_df(occurences, id = "claim_number",
 head(mydf[, 1:6])
 ```
 
-Each column has an attribute specifying the `type` of loss detail that the column contains.  The `type` was defined by the argument the column was supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` are of `type` `paid`).
+Each detail column has an attribute, `detail`, specifying the type of loss detail that the column contains.  The `detail` attribute is defined by the argument the column is supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` are of `detail` `paid`).
 
 ### Review the data
 
-Now we can use the `lossdb` package to review the data.  Let's start by seeing a summary of the most recent loss detail summarized by origin period.
+Now we can use the `lossdb` package to review the data.  Let's start by seeing a summary of the most recent `calendar` period summarized by `origin` period.
 
 ```{r, results = 'asis'}
 kable(summary(mydf))
 ```
 
-We can look at the data at an older evaluation date by specifying the `evaluation_date`
+We can look at the data at an older `calendar` period by specifying the `calendar` argument in the `summary()` function.
 
 ```{r, results = 'asis'}
 kable(summary(mydf, calendar = "2012"))
 ```
 
-Note: the `calendar` period is the `origin` period plus the `dev`. (e.g.) The `evaluation_date` for all claims in origin year 2010 at their first `evaluation_date` would be 2011.
+Note: the `calendar` period is the `origin` period plus the `dev`. (e.g.) The `calendar` for all claims in origin year 2010 at their first `calendar` period would be 2011.
 
 and the built in bar chart representation of the data...
 
@@ -190,7 +199,6 @@ There are no missing claims or claims with a decrease in `paid_loss`.  After thi
 
 Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, paid loss & ALAE net of all recoveries, medical only paid loss & ALAE gross of all recoveries, etc.).  Use the `paid()`, `incurred()`, `paid_recovery()`, and `incurred_recovery()` functions to get the total from each category.
 
-
 ```{r}
 # project total paid losses gross of any recovery
 value2project <- data.frame(mydf$origin, mydf$dev, paid(mydf))
@@ -198,3 +206,7 @@ head(value2project)
 ```
 
 Now the `ChainLadder` package can be used to make projections.  
+
+```{r}
+library(ChainLadder)
+```
