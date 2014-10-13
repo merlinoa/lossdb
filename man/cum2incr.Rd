@@ -3,17 +3,18 @@
 \alias{cum2incr}
 \title{Transforms cumulative loss payments into incrmental}
 \usage{
-cum2incr(ldf, value)
+cum2incr(ldf, detail)
 }
 \arguments{
 \item{ldf}{object of class loss_df}
 
-\item{col}{column to transform from cumulative to incremental}
+\item{detail}{column to transform from cumulative to incremental. Can be of any of
+the allowable `detail` types for class `loss_df`}
 }
 \description{
 Transforms cumulative loss payments into incrmental
 }
 \examples{
-increamental(recover_ldf, value = "paid")
+incremental(recover_ldf, detail = "paid")
 }
 
