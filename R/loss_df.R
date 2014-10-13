@@ -120,7 +120,7 @@ summary.loss_df <- function(ldf, detail = NULL, calendar = NULL) {
   if (is.null(detail)) {
     selected <- selected_rows[, setdiff(names(selected_rows), meta)]
   } else {
-    selected <- ldf_select(selected_rows, values = detail)
+    selected <- select_ldf(selected_rows, values = detail)
   }
   
   # sum columns based on origin
