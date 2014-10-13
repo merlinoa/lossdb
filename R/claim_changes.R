@@ -55,7 +55,7 @@ claim_changes <- function(ldf, calendar1, calendar2, values = NULL) {
   }
   
   # create change columns showing difference in value columns
-  for (i in 1:length(values)) {
+  for (i in seq_along(values)) {
     comparison[, length(comparison) + 1] <- comparison[, paste0(values[i], "_", calendar1)] -
       comparison[, paste0(values[i], "_", calendar2)]
     names(comparison)[length(comparison)] <- paste0(values[i], "_change")
