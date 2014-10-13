@@ -40,7 +40,8 @@ merge_ldf <- function(df, calendar1, calendar2, by, exclude) {
   group1 <- df[df$calendar == calendar1, setdiff(names(df), exclude)]
   group2 <- df[df$calendar == calendar2, setdiff(names(df), exclude)]
   comparison <- merge(group1, group2, by = by,
-                      all.x = TRUE, all.y = TRUE, suffixes = c(paste0("_", calendar1), paste0("_", calendar2)))
+                      all.x = TRUE, all.y = TRUE, 
+                      suffixes = c(paste0("_", calendar1), paste0("_", calendar2)))
   comparison[is.na(comparison)] <- 0
   comparison
 }
