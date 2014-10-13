@@ -47,11 +47,11 @@ claim_changes <- function(ldf, calendar1, calendar2, values = NULL) {
   # select values to be compared depending on 'values' argument
   # and create new data of merged data frames by selected calendar period
   if (is.null(values)) {
-    comparison <- merge_loss_df(ldf, calendar1, calendar2, by = by_cols, exclude = x_cols)
+    comparison <- merge_ldf(ldf, calendar1, calendar2, by = by_cols, exclude = x_cols)
     values <- setdiff(names(ldf), meta)
   } else {
-    ldf2 <- ldf_select(ldf, values = c(meta, values))
-    comparison <- merge_loss_df(ldf2, calendar1, calendar2, by = by_cols, exclude = x_cols)
+    ldf2 <- select_ldf(ldf, values = c(meta, values))
+    comparison <- merge_ldf(ldf2, calendar1, calendar2, by = by_cols, exclude = x_cols)
   }
   
   # create change columns showing difference in value columns

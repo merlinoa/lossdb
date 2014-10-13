@@ -8,8 +8,8 @@ detail <- list(dollar = list(
 
 # return columns for column names or by sum of dollar column
 # can return multiple columns
-# ldf_select(ldf_data, c("origin", "dev", "paid"))
-# ldf_select(ldf_data, c("paid_excess250", "sal_sub", "paid"))
+# select_ldf(ldf_data, c("origin", "dev", "paid"))
+# select_ldf(ldf_data, c("paid_excess250", "sal_sub", "paid"))
 select_ldf <- function(ldf, values) {
   # return summed type for dollar detail categories
   dollar_detail <- intersect(values, unlist(detail$dollar))
