@@ -201,12 +201,17 @@ Before a projection is made we must specifiy the loss amounts we wish to project
 
 ```{r}
 # project total paid losses gross of any recovery
-value2project <- data.frame(mydf$origin, mydf$dev, paid(mydf))
+value2project <- data.frame(origin = mydf$origin, dev = mydf$dev, paid_total = paid(mydf))
 head(value2project)
 ```
 
 Now the `ChainLadder` package can be used to make projections.  
 
 ```{r}
-library(ChainLadder)
+suppressMessages(library(ChainLadder))
+paid_tri <- as.triangle(value2project, origin = "origin", dev = "dev", value = "paid_total")
+```
+
+```{r}
+MackChainLadder(paid_tri)
 ```
