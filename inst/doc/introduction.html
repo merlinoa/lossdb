@@ -370,53 +370,39 @@ mychanges[, mychanges$paid_loss_changes &lt; 0]</code></pre>
 <h3>Create Projections</h3>
 <p>Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss &amp; ALAE gross of all recoveries, paid loss &amp; ALAE net of all recoveries, medical only paid loss &amp; ALAE gross of all recoveries, etc.). Use the <code>paid()</code>, <code>incurred()</code>, <code>paid_recovery()</code>, and <code>incurred_recovery()</code> functions to get the total from each category.</p>
 <pre class="r"><code># project total paid losses gross of any recovery
-value2project &lt;- data.frame(mydf$origin, mydf$dev, paid(mydf))
+value2project &lt;- data.frame(origin = mydf$origin, dev = mydf$dev, paid_total = paid(mydf))
 head(value2project)</code></pre>
-<pre><code>#&gt;   mydf.origin mydf.dev paid.mydf.
-#&gt; 1        2008        3        0.0
-#&gt; 2        2008        4        0.0
-#&gt; 3        2008        5        0.0
-#&gt; 4        2008        1      960.1
-#&gt; 5        2008        2      960.1
-#&gt; 6        2008        3      960.1</code></pre>
+<pre><code>#&gt;   origin dev paid_total
+#&gt; 1   2008   3        0.0
+#&gt; 2   2008   4        0.0
+#&gt; 3   2008   5        0.0
+#&gt; 4   2008   1      960.1
+#&gt; 5   2008   2      960.1
+#&gt; 6   2008   3      960.1</code></pre>
 <p>Now the <code>ChainLadder</code> package can be used to make projections.</p>
-<pre class="r"><code>library(ChainLadder)</code></pre>
-<pre><code>#&gt; Loading required package: systemfit
-#&gt; Loading required package: Matrix
-#&gt; Loading required package: car
-#&gt; Loading required package: lmtest
-#&gt; Loading required package: zoo
+<pre class="r"><code>suppressMessages(library(ChainLadder))
+paid_tri &lt;- as.triangle(value2project, origin = &quot;origin&quot;, dev = &quot;dev&quot;, value = &quot;paid_total&quot;)</code></pre>
+<pre class="r"><code>MackChainLadder(paid_tri)</code></pre>
+<pre><code>#&gt; Warning: 'loglinear' model to estimate sigma_n doesn't appear appropriate. 
+#&gt; p-value &gt; 5.
+#&gt;  est.sigma will be overwritten to 'Mack'.
+#&gt;  Mack's estimation method will be used instead.</code></pre>
+<pre><code>#&gt; MackChainLadder(Triangle = paid_tri)
 #&gt; 
-#&gt; Attaching package: 'zoo'
+#&gt;         Latest Dev.To.Date  Ultimate      IBNR Mack.S.E CV(IBNR)
+#&gt; 2008 3,916,550       1.000 3,916,550         0        0      NaN
+#&gt; 2009 5,440,477       0.933 5,834,052   393,576  229,393    0.583
+#&gt; 2010 4,638,498       0.816 5,685,246 1,046,748  304,466    0.291
+#&gt; 2011 2,790,057       0.672 4,151,697 1,361,640  281,792    0.207
+#&gt; 2012 1,457,562       0.359 4,058,676 2,601,114  471,988    0.181
 #&gt; 
-#&gt; The following objects are masked from 'package:base':
-#&gt; 
-#&gt;     as.Date, as.Date.numeric
-#&gt; 
-#&gt; 
-#&gt; ChainLadder version 0.1.8 by:
-#&gt; Markus Gesmann &lt;markus.gesmann@gmail.com&gt;
-#&gt; Wayne Zhang &lt;actuary_zhang@hotmail.com&gt;
-#&gt; Daniel Murphy &lt;danielmarkmurphy@gmail.com&gt;
-#&gt; 
-#&gt; Type ?ChainLadder to access overall documentation and
-#&gt; vignette('ChainLadder') for the package vignette.
-#&gt; 
-#&gt; Type demo(ChainLadder) to get an idea of the functionality of this package.
-#&gt; See demo(package='ChainLadder') for a list of more demos.
-#&gt; 
-#&gt; More information is available on the ChainLadder project web-site:
-#&gt; http://code.google.com/p/chainladder/
-#&gt; 
-#&gt; To suppress this message use the statement:
-#&gt; suppressPackageStartupMessages(library(ChainLadder))
-#&gt; 
-#&gt; 
-#&gt; Attaching package: 'ChainLadder'
-#&gt; 
-#&gt; The following object is masked from 'package:lossdb':
-#&gt; 
-#&gt;     cum2incr</code></pre>
+#&gt;                   Totals
+#&gt; Latest:    18,243,144.26
+#&gt; Dev:                0.77
+#&gt; Ultimate:  23,646,221.55
+#&gt; IBNR:       5,403,077.29
+#&gt; Mack S.E.:    885,821.10
+#&gt; CV(IBNR):           0.16</code></pre>
 </div>
 </div>
 </div>

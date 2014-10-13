@@ -81,9 +81,13 @@ mychanges[, mychanges$paid_loss_changes < 0]
 
 ## ------------------------------------------------------------------------
 # project total paid losses gross of any recovery
-value2project <- data.frame(mydf$origin, mydf$dev, paid(mydf))
+value2project <- data.frame(origin = mydf$origin, dev = mydf$dev, paid_total = paid(mydf))
 head(value2project)
 
 ## ------------------------------------------------------------------------
-library(ChainLadder)
+suppressMessages(library(ChainLadder))
+paid_tri <- as.triangle(value2project, origin = "origin", dev = "dev", value = "paid_total")
+
+## ------------------------------------------------------------------------
+MackChainLadder(paid_tri)
 
