@@ -82,17 +82,12 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 
 #' returns the grouped sum of loss_df columns by origin period
 #' 
-#' @param ldf loss_df S3 object
-#' @param by type attribute to summarize by.  Allowable values are `origin`, `dev`,
-#' and `id`
-#' @param values optional - select specific values to summarize
-#' @param calendar optional calendar period (i.e. calendar = origin + dev)
+#' @param ldf object of class \code{loss_df}
+#' @param detail optional - select specific detail names or columns names to include
+#' @param calendar optional - calendar period (i.e. calendar = origin + dev)
 #' 
 #' @method summary loss_df
-#' 
-#' @description summary.loss_df can provides snapshot for any columns
-#' or `type` attributes in a `loss_df` object.
-#' 
+#'  
 #' @export
 #' @examples
 #' 
@@ -105,7 +100,7 @@ is.loss_df <- function(x) inherits(x, "loss_df")
 #' # with specified `detail`
 #' summary(ldf_data, detail = c("paid_excess250", "sal_sub", "paid"))
 summary.loss_df <- function(ldf, detail = NULL, calendar = NULL) {
-  ## make sure only no meta values being passed to `detail` arguement
+  ## make sure no meta values being passed to `detail` argument
   if (length(intersect(detail, meta)) > 0) stop("meta values not be comparable")
   
   # filter rows of calendar period to summarize
@@ -183,6 +178,7 @@ plot.loss_df <- function(ldf, calendar = NULL) {
     geom_bar(data = neg, aes(x = origin, y = value, fill = variable),
              stat = "identity") +
     xlab("Origin Year") + ylab("Loss Amounts") + 
+    scale_y_continuous(labels = dollar) +
     ggtitle("Loss Amounts by Origin Year")
   suppressWarnings(print(p))
 }
