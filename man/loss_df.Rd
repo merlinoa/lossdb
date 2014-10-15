@@ -7,37 +7,36 @@ loss_df(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
   paid_recovery = NULL, incurred_recovery = NULL, desc = NULL)
 }
 \arguments{
-\item{ldf}{a data frame containing the raw data of losses by claim}
+\item{ldf}{a data frame containing columns to be passed to \code{loss_df}}
 
-\item{origin}{time period in which the claim originated}
+\item{origin}{policy period in which the claim/loss is associated}
 
-\item{dev}{development stage of claim at relevant calendar time}
+\item{dev}{development stage of claim/loss}
 
-\item{id}{optional identification key of claim}
+\item{id}{optional identification key for loss (e.g. a claim number)}
 
-\item{paid}{vector listing names or numbers for all paid loss columns}
+\item{paid}{vector listing names for all paid loss columns}
 
-\item{incurred}{vector listing names or numbers for all incurred loss columns}
+\item{incurred}{vector listing names for all incurred loss columns}
 
-\item{paid_recovery}{vector listing names of numbers for all paid recovery columns}
+\item{paid_recovery}{vector listing names for all paid recovery columns}
 
-\item{incurred_recovery}{vector listing names or numbers for all incurred recovery columns}
+\item{incurred_recovery}{vector listing names for all incurred recovery columns}
 
 \item{desc}{vector of all additional columns relevant to the analysis. Common examples are
-  'open claims', and 'reported claims' (when claims are evaluated on an occurence basis)}
+  "open claims", and "reported claims" (when claims are evaluated on an occurrence basis)}
 }
 \description{
 \code{loss_df} is the primary S3 data class for the \code{lossdb}
-package.  A \code{loss_df} is a data frame for insurance loss data.  The data frame
-is structured on a claim or occurence basis (i.e. each row represents 1 claim
-or 1 claim occurence) evaluated at a specific time, and each column contains
-certain variables attributable to the claim at that evaluation (i.e. calendar) time.
+package.  A \code{loss_df} is a data frame for insurance loss data.  Each
+row/observation represents losses at a unique "origin", "dev", and optional
+"id" (i.e \code{loss_df} takes loss data organized by claim/occurrence "id",
+"origin", and "dev" or just by "origin" and "dev").  Each column contains
+certain variables of interest to the actuarial analysis.
 }
 \details{
 \code{loss_df} is designed to assign descriptive and consistent names
-to loss data to allow for easier data analysis. The relevant
-columns can be assigned to the above arguments using a character vector of the column names
-or a numeric vector of the column position.
+to loss data to allow for quick execution of common actuarial analysis tasks.
 }
 \examples{
 # create loss_df object from `occurences` dataset
