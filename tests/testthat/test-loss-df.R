@@ -11,5 +11,5 @@ test_that("type attribute assigned to each column", {
                                desc = "claim_cts"
                   )
   
-  expect_equal(length(attr(mydf, "type")), ncol(mydf))
+  expect_equal(length(unlist(attr(mydf, "detail"))), 9)
 })
