@@ -22,17 +22,19 @@ The goal of this document is to introduce the basic tools `lossdb` provides, and
 
 ## Background: Actuaries and Insurance Loss Data
 
-The largest and most important data sets actuaries commonly work with are data sets describing the value and nature of insurance losses.  These data sets are often provided on a "by claim" basis (i.e. each row represents a claim and each column a variable).  These "by claim" data data sets, which I will call "loss data", are provided in a different format by every company, and often times many different formats by the same company.  A thorough combing of the loss data is often necessary to determine what each column is communicating and what columns are relevant to the analysis.  Additionally there are almost always errors that need to be addressed.  Understanding the underlying structure of the columns and ways to identify common errors can significantly improve the overall analysis process.
+Actuaries often work with data sets describing the dollar value and nature of insurance losses (loss data).  It is common for actuaries to analyze this data on a "by claim" basis (i.e. each row/observation represents a claim at a certain development stage and each column a variable) and/or on  a "by origin" basis (i.e. each row/observation represents a policy/accident period and each column a variable).  If data is not provided by claim or by origin it is transformed into one of the two formats for analysis.
+
+By profession actuaries become very familiar with loss data. Famailiarity allows them to analyze loss data fairly swifly and accurately using mostly ad hoc methods.
 
 ## Motivation
 
-I want to make reproducible actuarial reports in R.  Getting unclean data ready for analysis is a pain, and once the data is clean it is nice to have it in some kind of a standard format so you can do similar things to data whenever you get it into that format... enter `lossdb`
+I want to make reproducible actuarial reports in R.  Getting unclean data ready for analysis is a pain, and once the data is clean it is nice to have it in some kind of a standard format so you can do similar things to it whenever you get it into that format... enter `lossdb`
 
-The goal of the `lossdb` package is to provide standard functions for manipulating and visualizing loss data. `lossdb` provides a standard means of storing your claims data so you can use the same set of functions (defined by `lossdb`) to automate many repetetive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
+The goal of the `lossdb` package is to provide standard functions for manipulating, visualizing, and modeling loss data. `lossdb` provides a standard means of storing your loss data on a by claim or by origin basis so you can use the same set of functions (defined by `lossdb`) to automate many repetitive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
 
-When using R one can easily improve the flexibility of their reports by maintaining access to all the original claim detail (i.e. each report can be generated from the original claim data as opposed to a summary and a bunch of copy and pastes of the original claim data). This can be a huge time saver if you need to go back and change an origninal assumtion of your report.  Additionally generating reports from the original data reduces errors and provides confidence that the numbers in your report are up to date.  
+When using R one can easily improve the flexibility of their reports by maintaining access to all the original claim data (i.e. each report can be generated from the original claim data as opposed to a summary and a bunch of copy and pastes of the original claim data). This can be a huge time saver if you need to go back and change an origninal assumtion of your report.  Additionally generating reports from the original data reduces errors and provides confidence that the numbers in your report are up to date.  
 
-In summary, `lossdb` provides a standard format for storing loss data and provides a set of functions specific to that standard format.  The fact that the entire report can be done in R is what makes it more easily reproducible.  `lossdb` makes it a little easier to go from raw data to a final report in R.
+In summary, `lossdb` provides a standard format for storing loss data and provides a set of functions specific to that standard format.  The fact that the entire report can be done in R is what makes it more easily reproducible.  `lossdb` provides a standard structure to go from raw data to a final actuarial report in R.
 
 ## Philosophy
 
