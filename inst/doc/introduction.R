@@ -9,14 +9,14 @@ knitr::opts_chunk$set(
 #  str(losses)
 
 ## ----, message = FALSE---------------------------------------------------
-library(dplyr)
-# create origin and dev column
+library(dplyr) # assumes dplyr has already been installed using install.packages("dplyr")
+# create origin and dev columns
 losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)), 
                  evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")),
                  dev = evaluation_year - origin) 
 
-# group claims by occurence
-# often necessary when excess reinsurance is applied on an occurence basis
+# group claims by occurrence
+# often necessary when excess reinsurance is applied on an occurrence basis
 # rather than on a claims basis.
 occurences <- losses %>%
   group_by(claim_number, dev, origin) %>%
@@ -25,11 +25,11 @@ occurences <- losses %>%
                incurred_amount = sum(reserve_amount), # incurred loss & ALAE
                paid_expense = sum(X4_exp_payment), # paid ALAE
                incurred_expense = sum(X4_exp_reserve), #incurred ALAE
-               sal_sub_paid = sum(payment_no_reserve_a), # salvage and subrogation
-               sal_sub_incurred = sum(payment_no_reserve_a)
+               sal_sub_paid = sum(payment_no_reserve_a), # paid salvage and subrogation
+               sal_sub_incurred = sum(payment_no_reserve_a) # incurred salvage and subrogation
               )
 
-# create relevant loss values columns
+# create relevent "dollar" columns
 occurences <- mutate(occurences,
                     paid_loss = payment_amount - paid_expense,
                     incurred_loss = incurred_amount - incurred_expense,
@@ -53,11 +53,11 @@ mydf <- loss_df(occurences, id = "claim_number",
                  )
 head(mydf[, 1:6])
 
-## ----, results = 'asis'--------------------------------------------------
-kable(summary(mydf))
+## ----summary1------------------------------------------------------------
+summary(mydf)
 
-## ----, results = 'asis'--------------------------------------------------
-kable(summary(mydf, calendar = "2012"))
+## ----summary2------------------------------------------------------------
+summary(mydf, calendar = "2012")
 
 ## ------------------------------------------------------------------------
 plot(mydf)
@@ -73,21 +73,24 @@ head(mychanges)
 
 ## ------------------------------------------------------------------------
 # check for missing claims
-mychanges[, mychanges$claim_cts_change < 0]
+mychanges[mychanges$claim_cts_change < 0, ]
 
 ## ------------------------------------------------------------------------
 # check for claims in which paid_loss decreased
-mychanges[, mychanges$paid_loss_changes < 0]
+mychanges[mychanges$paid_loss_change < 0, ]
 
-## ------------------------------------------------------------------------
+## ----projection_values---------------------------------------------------
 # project total paid losses gross of any recovery
 value2project <- data.frame(origin = mydf$origin, dev = mydf$dev, paid_total = paid(mydf))
 head(value2project)
 
-## ------------------------------------------------------------------------
-suppressMessages(library(ChainLadder))
+## ----triangle,  message = FALSE------------------------------------------
+library(ChainLadder)
 paid_tri <- as.triangle(value2project, origin = "origin", dev = "dev", value = "paid_total")
 
-## ------------------------------------------------------------------------
+## ----mack, warning = FALSE-----------------------------------------------
 MackChainLadder(paid_tri)
+
+## ----boot, warning = FALSE-----------------------------------------------
+BootChainLadder(paid_tri)
 
