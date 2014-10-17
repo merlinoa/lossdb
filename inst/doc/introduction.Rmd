@@ -32,7 +32,7 @@ I want to make reproducible actuarial reports in R.  Getting raw data ready for 
 
 The goal of the `lossdb` package is to provide standard functions for manipulating, visualizing, and modeling loss data. `lossdb` provides a standard means of storing your loss data on a by id or by origin basis so you can use the same set of functions (defined by `lossdb`) to automate many repetitive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
 
-When using R one can easily improve the flexibility of their reports by maintaining access to all the original loss data (i.e. each report can be generated from the original loss data as opposed to a summary and a bunch of copy and pastes of the original loss data). This can be a huge time saver if you need to go back and change an underlying assumtion of your report.  Additionally generating reports from the original loss data reduces errors and provides confidence that the numbers in your report are up to date.  
+R one can greatly improve the flexibility of reports by maintaining access to all the original loss data (i.e. each report can be generated from the original loss data as opposed to a summary and a bunch of copy and pastes of the original loss data). This can be a huge time saver if you need to go back and change an underlying assumtion of your report.  Additionally generating reports from the original loss data reduces errors and provides confidence that the numbers in your report are up to date.  
 
 ## Philosophy
 
@@ -48,11 +48,11 @@ Columns in loss data can be losely grouped into a few different categories.  By 
 
 #### meta
 
-Additionally there are 3 special columns of particular importance to actuarial analysis.  I refer to these columns as the "meta" columns and they are defined as follows:
+There are 3 special columns of particular importance to actuarial analysis.  I refer to these columns as the "meta" columns and they are defined as follows:
 
-* origin - the accident period or policy period in which the claim/occurence originated
-* dev - the development stage of the claim
-* id - a unique (by dev) identifier for the claim or occurrence or member
+* origin - the accident period or policy period in which the loss originated
+* dev - the development stage of the loss
+* id - a identifier for the loss (it should be unique by dev period)
 
 #### dollar
 
@@ -102,7 +102,7 @@ There are many columns that are not relevant to our analysis, and some transform
 
 ### Format the data 
 
-The `loss_df()` function takes the data frame columns relevant to the actuarial analysis as its formal arguments.  Before we can create a `loss_df` object we need to transform the `losses` data set into a usable format.
+The `loss_df()` function takes a data frame and select columns of that data frame as its formal arguments.  Before we can create a `loss_df` object we need to transform the `losses` data set into a usable format.
 
 We use the dplyr package to clean the `losses` data so it conforms to the format required to make a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
 
@@ -172,7 +172,7 @@ We can look at the data at an older `calendar` period by specifying the `calenda
 summary(mydf, calendar = "2012")
 ```
 
-Note: the `calendar` period is the `origin` period plus the `dev`. (e.g.) The `calendar` for all claims in origin year 2010 at their first `calendar` period would be 2011.
+Note: the `calendar` period is the `origin` period plus the `dev`. (e.g. The `calendar` for all claims in origin year 2010 at their first `calendar` period would be 2011.)
 
 and the built in bar chart representation of the data...
 
@@ -238,4 +238,4 @@ MackChainLadder(paid_tri)
 BootChainLadder(paid_tri)
 ```
 
-Examples of actuarial reports created using R are available [here](). 
+Examples of actuarial reports created using R are available [here](www.ractuary.com/learn/reports). 
