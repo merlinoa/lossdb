@@ -2,7 +2,7 @@
 #' 
 #' @param ldf object of class loss_df
 #' @param dollar column to transform from cumulative to incremental. Can be of any of
-#' the allowable `detail` types for class `loss_df`
+#' the allowable `dollar` types for class `loss_df`
 #' 
 #' @export
 #' 
@@ -13,10 +13,10 @@ incremental <- function(ldf, dollar) {
   if (length(dollar) != 1) stop("value must be of length 1")
   
   # extract columns for transformation to incremental
-  cum <- select_ldf(ldf_data, values = c("id", "origin", "dev", dollar = "paid"))
+  cum <- select_ldf(ldf, values = c("id", "origin", "dev", dollar))
   
   # use reshape2 to cast the cumulative values
-  cum2 <- dcast(cum, id + origin ~ dev)
+  cum2 <- dcast(cum, id + origin ~ dev, sum)
   
   # calculate incremental losses
   incr <- t(apply(data.frame(rep(0, nrow(cum2)), cum2[, 3:length(cum2)]), 1, diff))
