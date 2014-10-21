@@ -3,7 +3,7 @@
 S3method(plot,loss_df)
 S3method(summary,loss_df)
 export(claim_changes)
-export(cum2incr)
+export(incremental)
 export(incurred)
 export(incurred_recovery)
 export(is.loss_df)
