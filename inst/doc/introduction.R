@@ -18,7 +18,7 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
 # group claims by occurrence
 # often necessary when excess reinsurance is applied on an occurrence basis
 # rather than on a claims basis.
-occurences <- losses %>%
+occurrences <- losses %>%
   group_by(claim_number, dev, origin) %>%
      summarise(claim_cts = n(),
                payment_amount = sum(payment_amount), # paid loss & ALAE
@@ -30,18 +30,18 @@ occurences <- losses %>%
               )
 
 # create relevent "dollar" columns
-occurences <- mutate(occurences,
+occurrences <- mutate(occurrences,
                     paid_loss = payment_amount - paid_expense,
                     incurred_loss = incurred_amount - incurred_expense,
                     paid_excess250 = max(payment_amount - sal_sub_paid - 250000, 0),
                     incurred_excess250 = max(incurred_amount - sal_sub_incurred - 250000, 0))
 
 # need to get rid of grouped df class. causing problems with subsetting.
-occurences <- as.data.frame(occurences)
+occurrences <- as.data.frame(occurrences)
 
 ## ------------------------------------------------------------------------
 # create loss_df object
-mydf <- loss_df(occurences, id = "claim_number",
+mydf <- loss_df(occurrences, id = "claim_number",
                              origin = "origin",
                              dev = "dev", 
                              paid = c("paid_loss", "paid_expense"),

@@ -22,7 +22,7 @@ The goal of this document is to introduce the basic tools `lossdb` provides, and
 
 ## Background: Actuaries and Insurance Loss Data
 
-Actuaries often work with data sets describing the dollar value and nature of insurance losses (loss data).  It is common for actuaries to analyze loss data on a "by id" basis (i.e. each row/observation represents a claim/occurrence/member at a certain development stage and each column a variable) or on  a "by origin" basis (i.e. each row/observation represents a policy/accident period and each column a variable).  If data is not provided by id or by origin it is transformed into one of the two formats for analysis.
+Actuaries often work with data sets describing the dollar value and nature of insurance losses (loss data).  It is common for actuaries to analyze loss data on a "by id" basis (i.e. each row/observation represents a claim/occurrence/member at a certain development stage and each column a variable) or on  a "by origin" basis (i.e. each row/observation represents a policy/accident period at a certain development stage and each column a variable).  If data is not provided by id or by origin it is transformed into one of the two formats for analysis.
 
 By profession actuaries become very familiar with loss data. Famailiarity allows them to analyze loss data fairly swifly and accurately using mostly ad hoc methods. By paying a lot of attention to detail actuaries can create reasonably complex and error free reports using ad hoc methods.  Nevertheless, ad hoc report creation is tedious and error prone.
 
@@ -32,15 +32,15 @@ I want to make reproducible actuarial reports in R.  Getting raw data ready for 
 
 The goal of the `lossdb` package is to provide standard functions for manipulating, visualizing, and modeling loss data. `lossdb` provides a standard means of storing your loss data on a by id or by origin basis so you can use the same set of functions (defined by `lossdb`) to automate many repetitive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
 
-R one can greatly improve the flexibility of reports by maintaining access to all the original loss data (i.e. each report can be generated from the original loss data as opposed to a summary and a bunch of copy and pastes of the original loss data). This can be a huge time saver if you need to go back and change an underlying assumtion of your report.  Additionally generating reports from the original loss data reduces errors and provides confidence that the numbers in your report are up to date.  
+R can greatly improve the flexibility of reports by maintaining access to all the original loss data (i.e. each report can be generated from the original loss data as opposed to a summary and a bunch of copy and pastes of the original loss data). This can be a huge time saver if you need to go back and change an underlying assumtion of your report.  Additionally generating reports from the original loss data reduces errors and provides confidence that the numbers in your report are up to date.  
 
 ## Philosophy
 
-Columns in loss data can be losely grouped into a few different categories.  By organizing each column into one of these categories (defined below) many common actuarial analysis tasks can be automated.  These tasks can then be scaled to any data set with columns defined by the same structure. 
+Columns in loss data can be losely grouped into a few different categories.  By organizing each column into one of these categories (defined below) the same actuarial analysis tasks can be automated.  These tasks can then be scaled to any loss data set with columns defined by the same structure. 
 
 ### The Structure of Loss Data
 
-`lossdb` categorizes all the useful information in loss data into columns that fall under one of 3 main categories:
+`lossdb` categorizes all the loss data columns applicable to the analysis into one of 3 main categories:
 
 * meta
 * dollar
@@ -50,9 +50,9 @@ Columns in loss data can be losely grouped into a few different categories.  By 
 
 There are 3 special columns of particular importance to actuarial analysis.  I refer to these columns as the "meta" columns and they are defined as follows:
 
-* origin - the accident period or policy period in which the loss originated
+* origin - the accident period or policy period in which the loss originated/is associated with
 * dev - the development stage of the loss
-* id - a identifier for the loss (it should be unique by dev period)
+* id - an identifier for the loss (it should be unique by dev period)
 
 #### dollar
 
@@ -89,9 +89,9 @@ The standard format `lossdb` uses to store claim loss data is the S3 class `loss
 
 The rest of this vignette will guide you through an example using `lossdb`.  The example will proceed as follows:
 
-* Take a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transforming that data set into a `loss_df` object that contains and organizes all the information relevant to the analysis.  The `losses` data set is provided by the `lossdb` package.
+* Take a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transform that data set into a `loss_df` object that contains and organizes all the information relevant to the analysis.  The `losses` data set is provided by the `lossdb` package.
 * Review the `loss_df` for errors and potential problem areas.
-* Perform statistical reserving techniques on the `loss_df` using the ChainLadder package.
+* Perform statistical reserving techniques on the `loss_df` using the `ChainLadder` package.
 
 View the structure of the uncleaned `losses` data frame using the `str` function:
 ```{r, eval = FALSE}
@@ -116,7 +116,7 @@ losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)),
 # group claims by occurrence
 # often necessary when excess reinsurance is applied on an occurrence basis
 # rather than on a claims basis.
-occurences <- losses %>%
+occurrences <- losses %>%
   group_by(claim_number, dev, origin) %>%
      summarise(claim_cts = n(),
                payment_amount = sum(payment_amount), # paid loss & ALAE
@@ -128,22 +128,23 @@ occurences <- losses %>%
               )
 
 # create relevent "dollar" columns
-occurences <- mutate(occurences,
+occurrences <- mutate(occurrences,
                     paid_loss = payment_amount - paid_expense,
                     incurred_loss = incurred_amount - incurred_expense,
                     paid_excess250 = max(payment_amount - sal_sub_paid - 250000, 0),
                     incurred_excess250 = max(incurred_amount - sal_sub_incurred - 250000, 0))
 
 # need to get rid of grouped df class. causing problems with subsetting.
-occurences <- as.data.frame(occurences)
+occurrences <- as.data.frame(occurrences)
 ```
 
 The above code does not use the `lossdb` package.  All that code did was prepare the data for use with the `lossdb` package (often a time consuming task especially the first time working with a new data set).
 
 Now that we have all the necessary columns, we can create the `loss_df` object.
+
 ```{r}
 # create loss_df object
-mydf <- loss_df(occurences, id = "claim_number",
+mydf <- loss_df(occurrences, id = "claim_number",
                              origin = "origin",
                              dev = "dev", 
                              paid = c("paid_loss", "paid_expense"),
@@ -195,7 +196,7 @@ mychanges <- claim_changes(mydf, calendar1 = "2013", calendar2 = "2012",
 head(mychanges)
 ```
 
-`mychanges` is a data frame consisting of all the claims in which there was a change in the `paid_loss` column from calendar period 2012 to 2013.  You can now browse through the changed claims to spot obvious problems with the new data.  For example we may want to check that there are no missing claims (i.e. no claims that were in the data at the last `calendar` that are no longer in the data)
+`mychanges` is a data frame consisting of all the claims in which there was a change in the `paid_loss` or `claim_cts` column from calendar period 2012 to 2013.  You can now browse through the changed claims to spot obvious problems with the new data.  For example we may want to check that there are no missing claims (i.e. no claims that were in the data at the last `calendar` that are no longer in the data)
 
 ```{r}
 # check for missing claims
@@ -215,7 +216,7 @@ There are a few claims with a decrease in "paid_loss".  Claims should not decrea
 
 ### Create Projections
 
-Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, paid loss & ALAE net of all recoveries, medical only paid loss & ALAE gross of all recoveries, etc.).  Use the `paid()`, `incurred()`, `paid_recovery()`, and `incurred_recovery()` functions to get the total from each "dollar" category.
+Before a projection is made we must specifiy the loss amounts we wish to project (e.g. paid loss & ALAE gross of all recoveries, paid loss & ALAE net of all recoveries, medical only paid loss & ALAE gross of all recoveries, etc.).  Use the `paid()`, `incurred()`, `paid_recovery()`, and `incurred_recovery()` functions to get the total from each respective "dollar" category.
 
 ```{r projection_values}
 # project total paid losses gross of any recovery
