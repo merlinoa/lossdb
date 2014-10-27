@@ -151,9 +151,11 @@ plot.loss_df <- function(ldf, calendar = NULL) {
   # format data frame
   if (is.null(calendar)) {
     smry <- summary(ldf, detail = unlist(detail$dollar))
+    cal <- max(ldf$calendar)
   } else {
     smry <- summary(ldf, detail = unlist(detail$dollar),
                     calendar = calendar)
+    cal <- calendar
   } 
 
   smry$case <- smry$incurred - smry$paid
@@ -179,7 +181,7 @@ plot.loss_df <- function(ldf, calendar = NULL) {
              stat = "identity") +
     xlab("Origin Year") + ylab("Loss Amounts") + 
     scale_y_continuous(labels = dollar) +
-    ggtitle("Loss Amounts by Origin Year")
+    ggtitle(paste("Loss by Origin Year Evaluated @", cal))
   suppressWarnings(print(p))
 }
 
