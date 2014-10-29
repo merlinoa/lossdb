@@ -157,7 +157,7 @@ mydf <- loss_df(occurrences, id = "claim_number",
 head(mydf[, 1:6])
 ```
 
-Each detail (dollar or desc) column has an attribute (`detail`) specifying the type of loss detail that the column contains.  The `detail` attribute is defined by the argument the column is supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` are of `detail` `paid`).  These columns maintain the column names that they are supplied with, and are categorized by their `detail`.  The names for `meta` columns are changed to the `meta` category they are supplied.
+Each detail (dollar or desc) column has an attribute specifying the type of loss detail that the column contains.  This attribute is named the "detail" attribute.  The detail attribute of each column is defined by the argument the column is supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` have a detail attribute of "paid").  All detail columns maintain the column names that they are supplied with, and are manipulated by the `lossdb` package based on their detail attribute.  The names for `meta` columns are changed to the `meta` category they are supplied.
 
 ### Review the data
 
