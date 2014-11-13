@@ -3,16 +3,25 @@
 \alias{incremental}
 \title{Transforms cumulative loss payments into incremental}
 \usage{
-incremental(ldf, dollar)
+incremental(ldf, dollar, include_all = FALSE)
 }
 \arguments{
 \item{ldf}{object of class loss_df}
 
 \item{dollar}{column to transform from cumulative to incremental. Can be of any of
-the allowable `detail` types for class `loss_df`}
+the allowable `dollar` types for class `loss_df`}
 }
 \description{
 Transforms cumulative loss payments into incremental
+}
+\details{
+`incremental` turns cumulative loss values into incemental amounts.  It currently
+only includes incremental amounts if the previous data for the previous calendar period
+is included in the data (i.e. if your trinagle is missing some of the early dev periods from
+some of the old origin periods, the first time data is reported for those claims it will not
+count as an incremental payment.)  Claims that are not reported until after development after the
+first development period after their origin are given an incremental payment in the first at
+the time they are first reported.
 }
 \examples{
 incremental(ldf_data, dollar = "paid")
