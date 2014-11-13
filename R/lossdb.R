@@ -6,4 +6,5 @@
 #' @import reshape2
 #' @import ChainLadder
 #' @import scales
+#' @import dplyr
 NULL
