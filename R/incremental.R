@@ -28,7 +28,7 @@ incremental <- function(ldf, dollar) {
   oldest_origin <- min(ldf$calendar) - 1
   
   # use reshape2 to cast the cumulative values
-  cum2 <- dcast(cum, id + origin ~ dev, sum)
+  cum2 <- dcast(cum, id + origin ~ dev)
   
   # fill in missing years with zeros for NA where appropriate
   if (oldest_origin > min(ldf$origin)) {
@@ -47,7 +47,7 @@ incremental <- function(ldf, dollar) {
     full_claims$dev <- as.numeric(as.character(full_claims$dev))
     full_claims <- full_claims[full_claims$dev + full_claims$origin <= max(ldf$calendar), ]
     
-    full_claims <- dcast(cum, id + origin ~ dev, sum)
+    full_claims <- dcast(cum, id + origin ~ dev)
     
     cum2 <- rbind_list(partial_claims, full_claims)
   }
