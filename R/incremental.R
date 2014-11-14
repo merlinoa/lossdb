@@ -33,11 +33,9 @@ incremental <- function(ldf, dollar) {
   # fill in missing years with zeros for NA where appropriate
   if (oldest_origin > min(ldf$origin)) {
     # seperate origin years with complete data from years with incomplete data
-    partial_origins <- min(cum2$origin):(oldest_origin - 1)
-    partial_claims <- cum2[cum2$origin %in% partial_origins, ]
+    partial_claims <- cum2[cum2$origin < oldest_origin, ]
     
-    full_origins <- oldest_origin:max(cum2$origin)
-    full_claims <- cum2[cum2$origin %in% full_origins, ]
+    full_claims <- cum2[cum2$origin >= oldest_origin, ]
     
     # fill NA with zeros where appropriate
     full_claims[is.na(full_claims)] <- 0
@@ -47,7 +45,7 @@ incremental <- function(ldf, dollar) {
     full_claims$dev <- as.numeric(as.character(full_claims$dev))
     full_claims <- full_claims[full_claims$dev + full_claims$origin <= max(ldf$calendar), ]
     
-    full_claims <- dcast(cum, id + origin ~ dev)
+    full_claims <- dcast(full_claims, id + origin ~ dev)
     
     cum2 <- rbind_list(partial_claims, full_claims)
   }
