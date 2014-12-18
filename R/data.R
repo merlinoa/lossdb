@@ -1,8 +1,11 @@
-#' A cleaned version of the \code{\link{losses}} dataset
+#' The \code{\link{losses}} data frame transformed for use in the \code{\link{loss_df}} function
 #'
+#' @description Columns have been transformed from dates to origin years and
+#' development years.  Also losses have been split up as desired for the examples.
+#' 
 #' @docType data
 #' 
-#' @name occurences
+#' @name occurrences
 NULL
 
 
@@ -25,12 +28,37 @@ NULL
 
 #' example workers' compensation loss_df
 #'
-#' @description This is a cleaned version of the \code{losses} data frame.  It was created
-#' using the \code{\link{loss_df}} function.
+#' @description This is an example \code{\link{loss_df}} S3 class object created from
+#' the \code{losses} data frame.  It was created using the \code{\link{loss_df}} function.
 #' 
-#' @usage losses_ldf
+#' @usage ldf_data
 #'  
-#' @format A \code{\link{loss_df}} object  with 8,054 observations on 12 variables. 
+#' @format A \code{\link{loss_df}} object 
 #'  
-#' @name recovery_ldf
+#' @name ldf_data
+NULL
+
+
+#' Minimal loss_df
+#'
+#' @description A small \code{\link{loss_df}} used to test and explain
+#' functions.
+#' 
+#' @usage test_df
+#'  
+#' @format A \code{\link{loss_df}} object 
+#'  
+#' @name test_df
+NULL
+
+#' Minimal loss_df with missing historic data
+#'
+#' @description A small \code{\link{loss_df}} with missing historic data
+#' used to test and explain functions.
+#' 
+#' @usage test_df_incomplete
+#'  
+#' @format A \code{\link{loss_df}} object 
+#'  
+#' @name test_df_incomplete
 NULL
