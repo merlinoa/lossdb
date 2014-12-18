@@ -1,23 +1,25 @@
 Package: lossdb
 Type: Package
 Title: Automate common tasks involving insurance loss data sets
-Version: 0.0.1
+Version: 0.0.0.9000
 Date: 2014-04-14
 Author: Andy Merlino
 Maintainer: Andy Merlino <merlinoa88@gmail.com>
-Description: An object to store loss data in that provides a framework and
-    additional functions for conducting many manipulations and visualizations
-    frequently done on insurance loss data sets.
-License: MIT
+Description: Provides a standardized S3 object for storing insurance loss data.
+    Additionally provides functions for many frequenctly used manipulations, 
+    visualizations, and summaries of insurance loss data sets.
+License: GPL-3
 Roxygen: list(wrap = FALSE)
 Depends:
     R (>= 3.1.0)
 Imports:
+    dplyr,
     ggplot2,
-    reshape2
+    reshape2,
+    scales
 VignetteBuilder: knitr
 LazyData: yes
 Suggests:
     knitr,
-    testthat,
-    rmarkdown
+    rmarkdown,
+    testthat
