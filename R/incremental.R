@@ -1,53 +1,58 @@
-#' Transforms cumulative loss payments into incremental
+#' Transforms cumulative dollar value in a loss_df object into incremental
 #' 
 #' @param ldf object of class loss_df
 #' @param dollar column to transform from cumulative to incremental. Can be of any of
-#' the allowable `dollar` types for class `loss_df`
+#' the allowable `dollar` types for class \code{loss_df} or any of the columns in the `dollar`
+#' type for class \code{loss_df}.
+#' @param include_all logical. default = FALSE.  Whether or not to calculate incremental
+#' losses for development years where data from prior development year is missing.
 #' 
-#' @details `incremental` turns cumulative loss values into incemental amounts.  It currently
-#' only includes incremental amounts if the previous data for the previous calendar period
-#' is included in the data (i.e. if your trinagle is missing some of the early dev periods from
-#' some of the old origin periods, the first time data is reported for those claims it will not
-#' count as an incremental payment.)  Claims that are not reported until after development after the
-#' first development period after their origin are given an incremental payment in the first at
-#' the time they are first reported.
+#' @details \code{incremental} turns cumulative loss values into incemental amounts.
+#' Claims that are not reported until after the first development period after their
+#' origin are given an incremental payment in the first at the time they are first reported.
 #' 
 #' @export
 #' 
 #' @examples
-#' incremental(ldf_data, dollar = "paid")
-incremental <- function(ldf, dollar) {
+#' incremental(test_df, dollar = "paid")
+#' 
+#' # nexy two compare the effect of `include_all` argument
+#' incremental(test_df_incomplete, dollar = "paid")
+#' incremental(test_df_incomplete, dollar = "paid", include_all = TRUE)
+incremental <- function(ldf, dollar, include_all = FALSE) {
   if (!is.loss_df(ldf)) stop("`ldf` must be of class `loss_df`")
   if (length(dollar) != 1) stop("value must be of length 1")
   
   # extract columns for transformation to incremental
   cum <- select_ldf(ldf, values = c("id", "origin", "dev", dollar))
   
-  # identify oldest origin period to add zeros in to replace
-  # missing values
+  # identify oldest origin period.
+  # will be used to add zeros for claims not reported in their
+  # first development period
   oldest_origin <- min(ldf$calendar) - 1
   
   # use reshape2 to cast the cumulative values
-  cum2 <- dcast(cum, id + origin ~ dev)
+  cum2 <- dcast(cum, 
+                formula = id + origin ~ dev, 
+                value.var = dollar)
   
   # fill in missing years with zeros for NA where appropriate
   if (oldest_origin > min(ldf$origin)) {
-    # seperate origin years with complete data from years with incomplete data
-    partial_claims <- cum2[cum2$origin < oldest_origin, ]
+    ## seperate origin years with complete data from years with incomplete data
+    # partial claims are missing data for early development periods
+    if (include_all) { # if you want to include increments from claims with incomplete devs
+      cum2[is.na(cum2)] <- 0
+    } else {
+      partial_claims <- cum2[cum2$origin < oldest_origin, ]
+      # full claims have data for all development periods
     
-    full_claims <- cum2[cum2$origin >= oldest_origin, ]
+      full_claims <- cum2[cum2$origin >= oldest_origin, ]
     
-    # fill NA with zeros where appropriate
-    full_claims[is.na(full_claims)] <- 0
+      # fill NA with zeros where appropriate
+      full_claims[is.na(full_claims)] <- 0
     
-    # remove zeros added to future claims
-    full_claims <- melt(full_claims, id.vars = c("id", "origin"), variable.name = "dev")
-    full_claims$dev <- as.numeric(as.character(full_claims$dev))
-    full_claims <- full_claims[full_claims$dev + full_claims$origin <= max(ldf$calendar), ]
-    
-    full_claims <- dcast(full_claims, id + origin ~ dev)
-    
-    cum2 <- rbind_list(partial_claims, full_claims)
+      cum2 <- rbind_list(partial_claims, full_claims)
+    }
   }
 
   # calculate incremental losses
