@@ -24,14 +24,14 @@
 #' @export
 #' @examples
 #' # create loss_df object from `occurences` dataset
-#' mydf <- loss_df(occurences,  id = "claim_number",
-#'                              origin = "origin", 
-#'                              dev = "dev", 
-#'                              paid = c("paid_loss_only", "paid_expense"),
-#'                              incurred = c("incurred_loss_only", "incurred_expense"),
-#'                              paid_recovery = c("sal_sub", "paid_excess250"),
-#'                              incurred_recovery = c("incurred_excess250", "sal_sub_incurred"),
-#'                              desc = "claim_cts"
+#' mydf <- loss_df(occurrences,  id = "claim_number",
+#'                               origin = "origin", 
+#'                               dev = "dev", 
+#'                               paid = c("paid_loss_only", "paid_expense"),
+#'                               incurred = c("incurred_loss_only", "incurred_expense"),
+#'                               paid_recovery = c("sal_sub", "paid_excess250"),
+#'                               incurred_recovery = c("incurred_excess250", "sal_sub_incurred"),
+#'                               desc = "claim_cts"
 #'                  )
 loss_df <- function(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL, 
                     paid_recovery = NULL, incurred_recovery = NULL, desc = NULL) {
@@ -49,10 +49,10 @@ loss_df <- function(ldf, origin, dev, id = NULL, paid = NULL, incurred = NULL,
   origin <- data.frame(origin = ldf[, origin])
   dev <- data.frame(dev = ldf[, dev])
   if (is.null(id)) {
-    ldf2 <- data.frame(origin, dev, ldf[, unlist(detail)])
+    ldf2 <- data.frame(origin, dev, ldf[, unlist(detail), drop = FALSE])
   } else {
     id <- data.frame(id = ldf[, id])
-    ldf2 <- data.frame(id, origin, dev, ldf[, unlist(detail)])
+    ldf2 <- data.frame(id, origin, dev, ldf[, unlist(detail), drop = FALSE])
   }
   
   # attaching type attribute to data frame
