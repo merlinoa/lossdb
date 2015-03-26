@@ -18,11 +18,11 @@ knitr::opts_chunk$set(
 
 # Introduction to lossdb
 
-The goal of this document is to introduce the basic tools `lossdb` provides, and to walk through a realistic example using the `lossdb` package.  This vignette and package are still in their early stages of development...
+Warning: This vignette and package are still in the early stages of development...
 
 ## Background: Actuaries and Insurance Loss Data
 
-Actuaries often work with data sets describing the dollar value and nature of insurance losses (loss data).  It is common for actuaries to analyze loss data on a "by id" basis (i.e. each row/observation represents a claim/occurrence/member at a certain development stage and each column a variable) or on  a "by origin" basis (i.e. each row/observation represents a policy/accident period at a certain development stage and each column a variable).  If data is not provided by id or by origin it is transformed into one of the two formats for analysis.
+Actuaries often work with data sets describing the dollar value and nature of insurance losses (loss data).  It is common for actuaries to analyze loss data on a "by id" basis (i.e. each row/observation represents a claim/occurrence/member at a certain development stage) or on  a "by origin" basis (i.e. each row/observation represents a policy/accident period at a certain development stage).  If data is not provided by id or by origin it is transformed into one of the two formats for analysis.
 
 By profession actuaries become very familiar with loss data. Famailiarity allows them to analyze loss data fairly swifly and accurately using mostly ad hoc methods. By paying a lot of attention to detail actuaries can create reasonably complex and error free reports using ad hoc methods.  Nevertheless, ad hoc report creation is tedious and error prone.
 
@@ -30,134 +30,85 @@ By profession actuaries become very familiar with loss data. Famailiarity allows
 
 I want to make reproducible actuarial reports in R.  Getting raw data ready for analysis is a pain, and once the data is ready it is nice to have it in some kind of a standard format so you can do similar things to it whenever you get it into that format... enter `lossdb`
 
-The goal of the `lossdb` package is to provide standard functions for manipulating, visualizing, and modeling loss data. `lossdb` provides a standard means of storing your loss data on a by id or by origin basis so you can use the same set of functions (defined by `lossdb`) to automate many repetitive tasks and ultimately create reproducible reports that are generated directly from the original loss data.
-
-R can greatly improve the flexibility of reports by maintaining access to all the original loss data (i.e. each report can be generated from the original loss data as opposed to a summary and a bunch of copy and pastes of the original loss data). This can be a huge time saver if you need to go back and change an underlying assumtion of your report.  Additionally generating reports from the original loss data reduces errors and provides confidence that the numbers in your report are up to date.  
+The goal of the `lossdb` package is to provide standard functions for manipulating, visualizing, and modeling loss data. `lossdb` provides a standard means of storing your loss data on a by id or by origin basis so you can use the same set of functions (defined by `lossdb`) to automate many repetitive tasks and ultimately create reproducible reports that are generated directly from the original loss data.  
 
 ## Philosophy
 
-Columns in loss data can be losely grouped into a few different categories.  By organizing each column into one of these categories (defined below) the same actuarial analysis tasks can be automated.  These tasks can then be scaled to any loss data set with columns defined by the same structure. 
+Columns in loss data can be losely grouped into a few different categories.  By organizing each column into one of these categories (defined below) certain actuarial analysis tasks can be automated across many loss data sets. 
 
 ### The Structure of Loss Data
 
-`lossdb` categorizes all the loss data columns applicable to the analysis into one of 3 main categories:
+`lossdb` groups all the loss data columns applicable to the analysis into one of 2 main categories.  These two overarching categories are further subdivided into several more categories.  A description of the `lossdb` stucture is detailed below:
 
 * meta
-* dollar
-* desc
+    + id
+    + dev
+    + origin
+* detail
+    + dollar
+        + paid
+        + incurred
+        + paid_recovery
+        + incurred_recovery
+    + desc
+
+More detail on the lossdb structure is described below:
 
 #### meta
 
-There are 3 special columns of particular importance to actuarial analysis.  I refer to these columns as the "meta" columns and they are defined as follows:
+The 3 meta columns are of particular importance.  They are defined as follows:
 
-* origin - the accident period or policy period in which the loss originated/is associated with
-* dev - the development stage of the loss
-* id - an identifier for the loss (it should be unique by dev period)
+* origin - required - numeric - single column - the period in which the loss is associated with
+* dev - required - numeric - single column - the development stage of the loss
+* id - optional - factor - single column - an identifier for the loss (it should be unique by a dev and origin period)
 
 #### dollar
 
-All columns representing dollar amounts are "dollar" columns.  `lossdb` assumes that all the information contained in the dollar columns can be sub categorized into 4 different groups without losing any information.  Each of these 4 groups can contain as many columns as neccessary.  The 4 groups:
+All columns representing dollar amounts are "dollar" columns.  `lossdb` assumes that all the information contained in dollar columns can be sub categorized into 4 different groups without losing any information.  Each of these 4 groups can contain as many columns as neccessary.  All dollar groups are optional, but you need to provide at least one column for one of the groups.  The columns must be numeric and you can have as many columns in each group as desired.  The 4 groups:
 
 * paid - actual amounts already paid
 * incurred - amounts incurred (i.e. total paid + reserve booked to be paid by the insurance company before the claim is closed)
-* paid_recovery - actual paid reimbursements (e.g. amount under deductible)
+* paid_recovery - actual paid reimbursements
 * incurred_recovery - incurred reimbursements
 
 #### desc
 
-Other columns included in loss data provide some type of description of the claim (e.g. claimant name, whether the claim is open or closed, etc.).  I refer to all of these columns as "desc" (short for description) columns.  The `lossdb` package can handle any number of description columns.
+Other columns included in loss data provide some type of description of the claim (e.g. claimant name, whether the claim is open or closed, etc.).  I refer to all of these columns as "desc" (short for description) columns.  The `lossdb` package can handle any number of description columns, they are optional, and they can be of any type.
 
-In summary `lossdb` organizes all the variables describing loss data into one of these categories:
+# Getting Started - An Example
 
-* meta
-    + id - optional - factor - single column
-    + dev - required - numeric - single column
-    + origin - required - numeric - single column
-* detail
-    + dollar
-        + paid - optional - numeric - supports multiple columns
-        + incurred - optional - numeric - supports multiple columns
-        + paid_recovery - optional - numeric - supports multiple columns
-        + incurred_recovery - optional - numeric - supports multiple columns
-    + desc - optional - numeric - supports multiple columns
+The example will proceed as follows:
 
-As you can see, `dollar` and `desc` fall under `detail` in the above tree.  `detail` is used to represent both the `dollar` and `desc` categories.
+1. Take a data set (`occurrences`) and transform that data set into a `loss_df` object that contains and organizes all the information relevant to the analysis.
+2. Review the `loss_df` for errors and potential problem areas.
+3. Perform statistical reserving techniques on the `loss_df` using the `ChainLadder` package.
 
-## Getting Started
-
-The standard format `lossdb` uses to store claim loss data is the S3 class `loss_df`.  A `loss_df` is created using the `loss_df()` function.  A `loss_df` holds and categorizes loss information on a by id or by origin basis, and is flexible enough to handle data that is categorized and organized differently from company to company. 
-
-The rest of this vignette will guide you through an example using `lossdb`.  The example will proceed as follows:
-
-* Take a data set (`losses`) in a format resembling how data may be provided by an insurance company, and transform that data set into a `loss_df` object that contains and organizes all the information relevant to the analysis.  The `losses` data set is provided by the `lossdb` package.
-* Review the `loss_df` for errors and potential problem areas.
-* Perform statistical reserving techniques on the `loss_df` using the `ChainLadder` package.
-
-View the structure of the uncleaned `losses` data frame using the `str` function:
-```{r, eval = FALSE}
-str(losses)
+View the structure of the `occurrences` data frame using the `str` function:
+```{r}
+str(occurrences)
 ```
 
-There are many columns that are not relevant to our analysis, and some transformations must be applied to the data to get all the necessary information out of the losses data frame.  Let's get started.
+The `occurrences` data frame has been cleaned up a bit.  This cleaning process can be time consuming.  I recommend using the `dplyr` package.
 
-### Format the data 
-
-The `loss_df()` function takes a data frame and select columns of that data frame as its formal arguments.  Before we can create a `loss_df` object we need to transform the `losses` data set into a usable format.
-
-We use the dplyr package to clean the `losses` data so it conforms to the format required to make a `loss_df`.  If you are not familiar with the dplyr package see the [dplyr introduction vignette](http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
-
-```{r, message = FALSE}
-library(dplyr) # assumes dplyr has already been installed using install.packages("dplyr")
-# create origin and dev columns
-losses <- mutate(losses, origin = as.numeric(substr(fiscal_year_desc, 1, 4)), 
-                 evaluation_year = as.numeric(format(as.Date(evaluation_date, "%Y-%m-%d"), "%Y")),
-                 dev = evaluation_year - origin) 
-
-# group claims by occurrence
-# often necessary when excess reinsurance is applied on an occurrence basis
-# rather than on a claims basis.
-occurrences <- losses %>%
-  group_by(claim_number, dev, origin) %>%
-     summarise(claim_cts = n(),
-               payment_amount = sum(payment_amount), # paid loss & ALAE
-               incurred_amount = sum(reserve_amount), # incurred loss & ALAE
-               paid_expense = sum(X4_exp_payment), # paid ALAE
-               incurred_expense = sum(X4_exp_reserve), #incurred ALAE
-               sal_sub_paid = sum(payment_no_reserve_a), # paid salvage and subrogation
-               sal_sub_incurred = sum(payment_no_reserve_a) # incurred salvage and subrogation
-              )
-
-# create relevent "dollar" columns
-occurrences <- mutate(occurrences,
-                    paid_loss = payment_amount - paid_expense,
-                    incurred_loss = incurred_amount - incurred_expense,
-                    paid_excess250 = max(payment_amount - sal_sub_paid - 250000, 0),
-                    incurred_excess250 = max(incurred_amount - sal_sub_incurred - 250000, 0))
-
-# need to get rid of grouped df class. causing problems with subsetting.
-occurrences <- as.data.frame(occurrences)
-```
-
-The above code does not use the `lossdb` package.  All that code did was prepare the data for use with the `lossdb` package (often a time consuming task especially the first time working with a new data set).
-
-Now that we have all the necessary columns, we can create the `loss_df` object.
+Now we can create the `loss_df` object.
 
 ```{r}
 # create loss_df object
-mydf <- loss_df(occurrences, id = "claim_number",
-                             origin = "origin",
-                             dev = "dev", 
-                             paid = c("paid_loss", "paid_expense"),
-                             incurred = c("incurred_loss", "incurred_expense"),
-                             paid_recovery = c("paid_excess250", "sal_sub_paid"),
-                             incurred_recovery = c("incurred_excess250", 
-                                                   "sal_sub_incurred"),
-                             desc = "claim_cts"
-                 )
+mydf <- loss_df(occurrences, 
+          id = "claim_number",
+          origin = "origin",
+          dev = "dev", 
+          paid = c("paid_loss_only", "paid_expense"),
+          incurred = c("incurred_loss_only", "incurred_expense"),
+          paid_recovery = c("paid_excess250", "sal_sub"),
+          incurred_recovery = c("incurred_excess250", 
+                                "sal_sub_incurred"),
+          desc = "claim_cts"
+        )
 head(mydf[, 1:6])
 ```
 
-Each detail (dollar or desc) column has an attribute specifying the type of loss detail that the column contains.  This attribute is named the "detail" attribute.  The detail attribute of each column is defined by the argument the column is supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` have a detail attribute of "paid").  All detail columns maintain the column names that they are supplied with, and are manipulated by the `lossdb` package based on their detail attribute.  The names for `meta` columns are changed to the `meta` category they are supplied.
+Each detail (dollar or desc) column has an attribute specifying the type of loss detail that the column contains.  This attribute is named the "detail" attribute.  The detail attribute of each column is defined by the argument the column is supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` have a detail attribute of "paid").  All detail columns maintain the column names that they are supplied with.  The names for `meta` columns are changed to the `meta` category to which they were supplied.
 
 ### Review the data
 
@@ -191,8 +142,11 @@ We can return a data frame of all the claims that have experienced a change from
 
 ```{r}
 # specify the loss amount values you want to see the changed claims for 
-mychanges <- claim_changes(mydf, calendar1 = "2013", calendar2 = "2012",
-                            values = c("paid_loss", "claim_cts"))
+mychanges <- claim_changes(mydf, 
+               calendar1 = "2013", 
+               calendar2 = "2012",
+               values = c("paid_loss_only", "claim_cts")
+             )
 head(mychanges)
 ```
 
@@ -209,10 +163,10 @@ We may also want to check if the `paid_loss` category decreased for any claims.
 
 ```{r}
 # check for claims in which paid_loss decreased
-mychanges[mychanges$paid_loss_change < 0, ]
+mychanges[mychanges$paid_loss_only_change < 0, ]
 ```
 
-There are a few claims with a decrease in "paid_loss".  Claims should not decrease in gross paid loss as they develop, but it happens in real world loss data.  Fortunately non of the paid amounts decreased so significantly that we need to stop our analysis and investigate.  Next we can project some ultimate losses. 
+There are a few claims with a decrease in "paid_loss_only".  Claims should not decrease in gross paid loss as they develop, but it happens in real world loss data.  Fortunately none of the paid amounts decreased so significantly that we need to stop our analysis and investigate.  Next we can project some ultimate losses. 
 
 ### Create Projections
 
@@ -220,15 +174,22 @@ Before a projection is made we must specifiy the loss amounts we wish to project
 
 ```{r projection_values}
 # project total paid losses gross of any recovery
-value2project <- data.frame(origin = mydf$origin, dev = mydf$dev, paid_total = paid(mydf))
+value2project <- data.frame(origin = mydf$origin, 
+                   dev = mydf$dev, 
+                   paid_total = paid(mydf)
+                 )
 head(value2project)
 ```
 
 Now the `ChainLadder` package can be used to make projections.  
 
-```{r triangle,  message = FALSE}
+```{r triangle, message = FALSE}
 library(ChainLadder)
-paid_tri <- as.triangle(value2project, origin = "origin", dev = "dev", value = "paid_total")
+paid_tri <- as.triangle(value2project, 
+              origin = "origin", 
+              dev = "dev", 
+              value = "paid_total"
+            )
 ```
 
 ```{r mack, warning = FALSE}
@@ -238,5 +199,3 @@ MackChainLadder(paid_tri)
 ```{r boot, warning = FALSE}
 BootChainLadder(paid_tri)
 ```
-
-Examples of actuarial reports created using R are available [here](www.ractuary.com/learn/reports). 
