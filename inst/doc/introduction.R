@@ -21,13 +21,13 @@ mydf <- loss_df(occurrences,
                                 "sal_sub_incurred"),
           desc = "claim_cts"
         )
-head(mydf[, 1:6])
+kable(head(mydf[, 1:6]))
 
 ## ----summary1------------------------------------------------------------
-summary(mydf)
+kable(summary(mydf)[, 1:9])
 
 ## ----summary2------------------------------------------------------------
-summary(mydf, calendar = "2012")
+kable(summary(mydf, calendar = "2012")[, 1:9])
 
 ## ------------------------------------------------------------------------
 plot(mydf)
@@ -42,15 +42,15 @@ mychanges <- claim_changes(mydf,
                calendar2 = "2012",
                values = c("paid_loss_only", "claim_cts")
              )
-head(mychanges)
+kable(head(mychanges))
 
 ## ------------------------------------------------------------------------
 # check for missing claims
-mychanges[mychanges$claim_cts_change < 0, ]
+kable(mychanges[mychanges$claim_cts_change < 0, ])
 
 ## ------------------------------------------------------------------------
 # check for claims in which paid_loss decreased
-mychanges[mychanges$paid_loss_only_change < 0, ]
+kable(mychanges[mychanges$paid_loss_only_change < 0, ])
 
 ## ----projection_values---------------------------------------------------
 # project total paid losses gross of any recovery
@@ -58,7 +58,7 @@ value2project <- data.frame(origin = mydf$origin,
                    dev = mydf$dev, 
                    paid_total = paid(mydf)
                  )
-head(value2project)
+kable(head(value2project))
 
 ## ----triangle, message = FALSE-------------------------------------------
 library(ChainLadder)

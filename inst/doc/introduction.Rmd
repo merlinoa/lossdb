@@ -24,8 +24,6 @@ Warning: This vignette and package are still in the early stages of development.
 
 Actuaries often work with data sets describing the dollar value and nature of insurance losses (loss data).  It is common for actuaries to analyze loss data on a "by id" basis (i.e. each row/observation represents a claim/occurrence/member at a certain development stage) or on  a "by origin" basis (i.e. each row/observation represents a policy/accident period at a certain development stage).  If data is not provided by id or by origin it is transformed into one of the two formats for analysis.
 
-By profession actuaries become very familiar with loss data. Famailiarity allows them to analyze loss data fairly swifly and accurately using mostly ad hoc methods. By paying a lot of attention to detail actuaries can create reasonably complex and error free reports using ad hoc methods.  Nevertheless, ad hoc report creation is tedious and error prone.
-
 ## Motivation
 
 I want to make reproducible actuarial reports in R.  Getting raw data ready for analysis is a pain, and once the data is ready it is nice to have it in some kind of a standard format so you can do similar things to it whenever you get it into that format... enter `lossdb`
@@ -88,8 +86,6 @@ View the structure of the `occurrences` data frame using the `str` function:
 str(occurrences)
 ```
 
-The `occurrences` data frame has been cleaned up a bit.  This cleaning process can be time consuming.  I recommend using the `dplyr` package.
-
 Now we can create the `loss_df` object.
 
 ```{r}
@@ -105,7 +101,7 @@ mydf <- loss_df(occurrences,
                                 "sal_sub_incurred"),
           desc = "claim_cts"
         )
-head(mydf[, 1:6])
+kable(head(mydf[, 1:6]))
 ```
 
 Each detail (dollar or desc) column has an attribute specifying the type of loss detail that the column contains.  This attribute is named the "detail" attribute.  The detail attribute of each column is defined by the argument the column is supplied to in the `loss_df()` function (i.e. `paid_loss` and `paid_expense` have a detail attribute of "paid").  All detail columns maintain the column names that they are supplied with.  The names for `meta` columns are changed to the `meta` category to which they were supplied.
@@ -115,13 +111,13 @@ Each detail (dollar or desc) column has an attribute specifying the type of loss
 Now we can use the `lossdb` package to review the data.  Let's start by seeing a summary of the most recent `calendar` period (`calendar` = `origin` + `dev`) summarized by `origin` period.
 
 ```{r summary1}
-summary(mydf)
+kable(summary(mydf)[, 1:9])
 ```
 
 We can look at the data at an older `calendar` period by specifying the `calendar` argument in the `summary()` function.
 
 ```{r summary2}
-summary(mydf, calendar = "2012")
+kable(summary(mydf, calendar = "2012")[, 1:9])
 ```
 
 Note: the `calendar` period is the `origin` period plus the `dev`. (e.g. The `calendar` for all claims in origin year 2010 at their first `calendar` period would be 2011.)
@@ -147,14 +143,14 @@ mychanges <- claim_changes(mydf,
                calendar2 = "2012",
                values = c("paid_loss_only", "claim_cts")
              )
-head(mychanges)
+kable(head(mychanges))
 ```
 
 `mychanges` is a data frame consisting of all the claims in which there was a change in the `paid_loss` or `claim_cts` column from calendar period 2012 to 2013.  You can now browse through the changed claims to spot obvious problems with the new data.  For example we may want to check that there are no missing claims (i.e. no claims that were in the data at the last `calendar` that are no longer in the data)
 
 ```{r}
 # check for missing claims
-mychanges[mychanges$claim_cts_change < 0, ]
+kable(mychanges[mychanges$claim_cts_change < 0, ])
 ```
 
 This check revealed that there are no missing claims in our `loss_db` from calendar 2012 to 2013.
@@ -163,7 +159,7 @@ We may also want to check if the `paid_loss` category decreased for any claims.
 
 ```{r}
 # check for claims in which paid_loss decreased
-mychanges[mychanges$paid_loss_only_change < 0, ]
+kable(mychanges[mychanges$paid_loss_only_change < 0, ])
 ```
 
 There are a few claims with a decrease in "paid_loss_only".  Claims should not decrease in gross paid loss as they develop, but it happens in real world loss data.  Fortunately none of the paid amounts decreased so significantly that we need to stop our analysis and investigate.  Next we can project some ultimate losses. 
@@ -178,7 +174,7 @@ value2project <- data.frame(origin = mydf$origin,
                    dev = mydf$dev, 
                    paid_total = paid(mydf)
                  )
-head(value2project)
+kable(head(value2project))
 ```
 
 Now the `ChainLadder` package can be used to make projections.  
